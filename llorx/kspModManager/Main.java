@@ -53,16 +53,16 @@ import java.net.CookiePolicy;
 
 class MyTableModel extends AbstractTableModel {
 	
-    private List<Mod> mods;
+	private List<Mod> mods;
 	
-    public MyTableModel(List<Mod> mods) {
-        this.mods = mods;
-    }
+	public MyTableModel(List<Mod> mods) {
+		this.mods = mods;
+	}
 	
-    @Override
-    public int getRowCount() {
-        return mods.size();
-    }
+	@Override
+	public int getRowCount() {
+		return mods.size();
+	}
 	
 	@Override
 	public int getColumnCount() {
@@ -116,8 +116,8 @@ class MyTableModel extends AbstractTableModel {
 }
 
 public class Main extends JFrame implements ActionListener {
-    JButton downloadBut;
-    JButton installBut;
+	JButton downloadBut;
+	JButton installBut;
 	
 	JButton configBut;
 	
@@ -142,8 +142,8 @@ public class Main extends JFrame implements ActionListener {
 	
 	boolean closingApp = false;
 	
-    public Main() {
-        setLayout(null);
+	public Main() {
+		setLayout(null);
 		
 		addWindowListener(new WindowAdapter() {
 			@Override
@@ -168,44 +168,44 @@ public class Main extends JFrame implements ActionListener {
 		CompoundBorder border = new CompoundBorder(line, empty);
 		
 		configBut=new JButton("Select KSP main folder");
-        configBut.setBounds(2,2,200,40);
-        add(configBut);
-        configBut.addActionListener(this);
+		configBut.setBounds(2,2,200,40);
+		add(configBut);
+		configBut.addActionListener(this);
 		
 		downloadBut=new JButton("[+] Download mod");
-        downloadBut.setBounds(292,2,200,19);
-        add(downloadBut);
-        downloadBut.addActionListener(this);
+		downloadBut.setBounds(292,2,200,19);
+		add(downloadBut);
+		downloadBut.addActionListener(this);
 		
 		installBut=new JButton("Install Queued mods");
-        installBut.setBounds(292,23,200,19);
-        add(installBut);
-        installBut.addActionListener(this);
+		installBut.setBounds(292,23,200,19);
+		add(installBut);
+		installBut.addActionListener(this);
 		installBut.setEnabled(false);
 		
 		renameBut=new JButton("Rename Mod");
-        renameBut.setBounds(2,450,150,20);
-        add(renameBut);
-        renameBut.addActionListener(this);
+		renameBut.setBounds(2,450,150,20);
+		add(renameBut);
+		renameBut.addActionListener(this);
 		
 		removeBut=new JButton("Delete Mod");
-        removeBut.setBounds(175,450,150,20);
-        add(removeBut);
-        removeBut.addActionListener(this);
+		removeBut.setBounds(175,450,150,20);
+		add(removeBut);
+		removeBut.addActionListener(this);
 		
 		updateBut=new JButton("Check mod updates");
-        updateBut.setBounds(340,450,150,20);
-        add(updateBut);
-        updateBut.addActionListener(this);
+		updateBut.setBounds(340,450,150,20);
+		add(updateBut);
+		updateBut.addActionListener(this);
 		
 		mainList = new JTable(new MyTableModel(modList));
 		JScrollPane barraDesplazamiento = new JScrollPane(mainList); 
 		barraDesplazamiento.setBounds(2,47,490,400);
 		add(barraDesplazamiento);
 		mainList.getTableHeader().setReorderingAllowed(false);
-    }
+	}
 	
-    public void actionPerformed(ActionEvent e) {
+	public void actionPerformed(ActionEvent e) {
 		if(e.getSource()==downloadBut) {
 			getAddon();
 		} else if(e.getSource()==installBut) {
@@ -243,7 +243,7 @@ public class Main extends JFrame implements ActionListener {
 		} else if(e.getSource()==configBut) {
 			selectKspFolder();
 		}
-    }
+	}
 	
 	void uninstallMod(Mod mod) {
 		uninstallMod(mod, true);
@@ -837,7 +837,7 @@ public class Main extends JFrame implements ActionListener {
 		}
 	}
 	
-    void getAddon() {
+	void getAddon() {
 		String urlText = "";
 		String name = "";
 		JTextField modName = new JTextField();
@@ -1077,12 +1077,12 @@ public class Main extends JFrame implements ActionListener {
 		return node.getNodeValue();
 	}
 	
-    public static void main(String[] ar) {
+	public static void main(String[] ar) {
 		CookieHandler.setDefault( new CookieManager( null, CookiePolicy.ACCEPT_ALL ) );
 		if ((new File("temp")).exists()) {
 			DirIO.clearDir("temp");
 		}
-        Main window=new Main();
+		Main window=new Main();
 		window.setSize(500,500);
 		window.setResizable(false);
 		window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -1091,7 +1091,7 @@ public class Main extends JFrame implements ActionListener {
 		window.setLocationRelativeTo(null);
 		
 		window.loadConfigFile();
-    }
+	}
 	
 	class MyCustomWindowAdapter extends WindowAdapter {
 		
@@ -1248,8 +1248,8 @@ class DirIO {
 }
 
 class myComparator implements Comparator<Mod> {
-    @Override
-    public int compare(Mod a, Mod b) {
-        return a.getName().compareToIgnoreCase(b.getName());
-    }
+	@Override
+	public int compare(Mod a, Mod b) {
+		return a.getName().compareToIgnoreCase(b.getName());
+	}
 }

@@ -114,7 +114,7 @@ public class ModDataParser {
 										
 										
 										String[] suffixes =
-										    //  0     1     2     3     4     5     6     7     8     9
+											//  0     1     2     3     4     5     6     7     8     9
 											 { "th", "st", "nd", "rd", "th", "th", "th", "th", "th", "th",
 										    //  10    11    12    13    14    15    16    17    18    19
 											   "th", "th", "th", "th", "th", "th", "th", "th", "th", "th",
@@ -127,7 +127,7 @@ public class ModDataParser {
 										int day = date.get(Calendar.DAY_OF_MONTH);
 										int month = date.get(Calendar.MONTH);
 										editedDate = editedDate.replace("Today", day + suffixes[day] + " " + monthNames[month] + " " + date.get(Calendar.YEAR));
-										date.add(Calendar.DATE, -1);    
+										date.add(Calendar.DATE, -1);
 										day = date.get(Calendar.DAY_OF_MONTH);
 										month = date.get(Calendar.MONTH);
 										editedDate = editedDate.replace("Yesterday", day + suffixes[day] + " " + monthNames[month] + " " + date.get(Calendar.YEAR));

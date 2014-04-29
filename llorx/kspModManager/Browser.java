@@ -39,7 +39,7 @@ import javax.swing.JOptionPane;
 public class Browser {
 	WebEngine webEngine;
 	Worker webWorker;
-	
+
 	int width = 0;
 	int height = 0;
 	
@@ -51,7 +51,7 @@ public class Browser {
 	int dots = 0;
 	JDialog dialog;
 	
-    public void show(String url) {
+	public void show(String url) {
 		Platform.setImplicitExit(false);
 		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 		width = (int)screenSize.getWidth();
@@ -65,11 +65,11 @@ public class Browser {
 			height = 768;
 		}
 		
-        dialog = new JDialog();
+		dialog = new JDialog();
 		
-        dialog.getContentPane().setLayout(null);
+		dialog.getContentPane().setLayout(null);
 		
-        JFXPanel fxPanel = new JFXPanel();
+		JFXPanel fxPanel = new JFXPanel();
 		
 		loading = new JLabel("", JLabel.CENTER);
 		dialog.add(loading);
@@ -83,8 +83,8 @@ public class Browser {
 		
 		
 		final JButton jButton = new JButton("<< Back");
-        dialog.add(jButton);
-        jButton.setSize(new Dimension(100, 27));
+		dialog.add(jButton);
+		jButton.setSize(new Dimension(100, 27));
 		jButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -98,21 +98,21 @@ public class Browser {
 		});
 		
 		
-        dialog.add(fxPanel);
+		dialog.add(fxPanel);
 		dialog.setModal(true);
 		
-        fxPanel.setSize(new Dimension(width, height));
+		fxPanel.setSize(new Dimension(width, height));
 		
-        dialog.getContentPane().setPreferredSize(new Dimension(width, height));
-        dialog.pack();
-        dialog.setResizable(false);
+		dialog.getContentPane().setPreferredSize(new Dimension(width, height));
+		dialog.pack();
+		dialog.setResizable(false);
 		
-        Platform.runLater(new Runnable() {
-            @Override
-            public void run() {
-                initFX(fxPanel, url);
-            }
-        });
+		Platform.runLater(new Runnable() {
+			@Override
+			public void run() {
+				initFX(fxPanel, url);
+			}
+		});
 		
 		Point middle = new Point((int)screenSize.getWidth() / 2, (int)screenSize.getHeight() / 2);
 		Point newLocation = new Point(middle.x - (dialog.getWidth() / 2), 
@@ -121,24 +121,23 @@ public class Browser {
 		
 		
 		dialog.setVisible(true);
-    }
+	}
+	
+	private void initFX(final JFXPanel fxPanel, String url) {
 
-    /* Creates a WebView and fires up google.com */
-    private void initFX(final JFXPanel fxPanel, String url) {
+		Group group = new Group();
+		Scene scene = new Scene(group);
+		fxPanel.setScene(scene);
 
-        Group group = new Group();
-        Scene scene = new Scene(group);
-        fxPanel.setScene(scene);
+		WebView webView = new WebView();
 
-        WebView webView = new WebView();
-
-        group.getChildren().add(webView);
-        webView.setMinSize(width, height);
-        webView.setMaxSize(width, height);
+		group.getChildren().add(webView);
+		webView.setMinSize(width, height);
+		webView.setMaxSize(width, height);
 		webView.setContextMenuEnabled(false);
 		
-            // Obtain the webEngine to navigate
-        webEngine = webView.getEngine();
+			// Obtain the webEngine to navigate
+		webEngine = webView.getEngine();
 		webWorker = webEngine.getLoadWorker();
 		
 		webWorker.stateProperty().addListener(new ChangeListener<State>() {
@@ -198,6 +197,6 @@ public class Browser {
 			}
 		});
 		
-        webEngine.load(url);
-    }
+		webEngine.load(url);
+	}
 }
