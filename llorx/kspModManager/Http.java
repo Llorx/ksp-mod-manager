@@ -9,25 +9,47 @@ import java.net.URL;
 import java.net.HttpURLConnection;
 
 public class Http {
+	public static final int HTML = -1;
+	public static final int ZIP_EXTENSION = 0;
+	public static final int OTHER_EXTENSION = 1;
+
 	public static Connection.Response get(String link) {
 		int tryouts = 0;
 		while(tryouts < 10) {
 			tryouts++;
 			try {
-				return Jsoup.connect(link).method(Connection.Method.GET).followRedirects(true).execute();
+				return Jsoup.connect(link).userAgent("LlorxKspModManager").method(Connection.Method.GET).followRedirects(true).execute();
 			} catch (Exception e) {
 			}
 		}
 		return null;
 	}
 	
-	public static boolean isFile(String link) {
+	public static int fileType(String link) {
 		HttpURLConnection conn = Http.getConnection(link);
 		if (conn != null) {
 			String type = conn.getHeaderField("Content-Type");
-			return (type.indexOf("application/") > -1);
+			if (type.indexOf("application/") > -1) {
+				if (type.indexOf("application/zip") > -1) {
+					return Http.ZIP_EXTENSION;
+				} else {
+					String header = conn.getHeaderField("Content-Disposition");
+					if(header != null && header.indexOf("=") != -1) {
+						String filename = header.split("=")[1];
+						if (filename.indexOf(".") > -1 && filename.substring(filename.indexOf(".")+1).equals("zip")) {
+							return Http.ZIP_EXTENSION;
+						} else {
+							return Http.OTHER_EXTENSION;
+						}
+					} else {
+						return Http.OTHER_EXTENSION;
+					}
+				}
+			} else {
+				return Http.HTML;
+			}
 		}
-		return false;
+		return Http.HTML;
 	}
 	
 	public static HttpURLConnection getConnection(String link) {

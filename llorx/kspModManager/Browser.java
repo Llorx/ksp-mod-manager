@@ -149,21 +149,26 @@ public class Browser {
 					loading.setVisible(true);
 					dots = 0;
 					try {
-						if (Http.isFile(lastClick)) {
-							int reply = JOptionPane.showConfirmDialog(null, "Selected:\n" + lastClick + "\nAre you sure?", "Sure?", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
-							if (reply == JOptionPane.YES_OPTION) {
-								downloadFile = lastClick;
-								Platform.runLater(new Runnable(){
-									@Override
-									public void run() {
-										webWorker.cancel();
-										SwingUtilities.invokeLater(new Runnable(){
-											@Override public void run() {
-												dialog.dispose();
-											}
-										});
-									}
-								});
+						int fileType = Http.fileType(lastClick);
+						if (fileType != Http.HTML) {
+							if (fileType == Http.ZIP_EXTENSION) {
+								int reply = JOptionPane.showConfirmDialog(null, "Selected:\n" + lastClick + "\nAre you sure?", "Sure?", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+								if (reply == JOptionPane.YES_OPTION) {
+									downloadFile = lastClick;
+									Platform.runLater(new Runnable(){
+										@Override
+										public void run() {
+											webWorker.cancel();
+											SwingUtilities.invokeLater(new Runnable(){
+												@Override public void run() {
+													dialog.dispose();
+												}
+											});
+										}
+									});
+								}
+							} else {
+								JOptionPane.showMessageDialog(null, "This file is not a zip file. Not supported by Mod Manager right now. Select another one.", "File not supported", JOptionPane.PLAIN_MESSAGE);
 							}
 						}
 					} catch (Exception e) {

@@ -445,7 +445,7 @@ public class Main extends JFrame implements ActionListener {
 				}
 			}
 			
-			if (!Http.isFile(mod.getDownloadLink())) {
+			if (Http.fileType(mod.getDownloadLink()) != Http.ZIP_EXTENSION) {
 				String dlink = Http.getDownloadLink(mod.getDownloadLink());
 				if (dlink == null) {
 					Browser browser = new Browser();
@@ -454,7 +454,7 @@ public class Main extends JFrame implements ActionListener {
 						dlink = browser.downloadFile;
 					}
 				}
-				if (dlink != null && Http.isFile(dlink)) {
+				if (dlink != null && Http.fileType(dlink) ==  Http.ZIP_EXTENSION) {
 					mod.setDownloadLink(dlink);
 				} else {
 					alertBox(null, mod.getName() + ": Error getting download link.");
