@@ -1188,7 +1188,7 @@ class Zip {
 				if (!ze.isDirectory() && readmes != null) {
 					int i = fileName.lastIndexOf('.');
 					if (i > 0) {
-						String[] readableExtensions = {"txt", "asciidoc"};
+						String[] readableExtensions = {"txt", "asciidoc", "md"};
 						for (String ext: readableExtensions) {
 							if (ext.equals(fileName.substring(i+1).toLowerCase())) {
 								readmes.add(filePath);
