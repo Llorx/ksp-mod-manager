@@ -43,14 +43,22 @@ public class Browser {
 	
 	public String lastClick = "";
 	public String downloadFile = "";
+	public boolean modReloaded = false;
 	
 	JLabel loading;
 	
 	int dots = 0;
 	JDialog dialog;
 	
+	Mod mod;
+	
 	public void show(String url) {
+		show(url, null);
+	}
+	
+	public void show(String url, Mod m) {
 		Platform.setImplicitExit(false);
+		mod = m;
 		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 		width = (int)screenSize.getWidth();
 		height = (int)screenSize.getHeight();
@@ -164,6 +172,27 @@ public class Browser {
 								}
 							} else {
 								JOptionPane.showMessageDialog(null, "This file is not a zip file. Not supported by Mod Manager right now. Select another one.", "File not supported", JOptionPane.PLAIN_MESSAGE);
+							}
+						} else {
+							if (mod != null) {
+								if (lastClick.indexOf("kerbalspaceport.com/") > -1) {
+									int reply = JOptionPane.showConfirmDialog(null, "Detected a Spaceport link\nDo you want to check version updates directly from there in the future?", "Detected Spaceport link", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+									if (reply == JOptionPane.YES_OPTION) {
+										modReloaded = true;
+										mod.reloadMod(lastClick);
+										Platform.runLater(new Runnable() {
+											@Override
+											public void run() {
+												webWorker.cancel();
+												SwingUtilities.invokeLater(new Runnable(){
+													@Override public void run() {
+														dialog.dispose();
+													}
+												});
+											}
+										});
+									}
+								}
 							}
 						}
 					} catch (Exception e) {

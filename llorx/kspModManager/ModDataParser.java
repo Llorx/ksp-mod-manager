@@ -90,7 +90,10 @@ public class ModDataParser {
 			}
 			res = Http.get(mod.getLink());
 			Document doc = res.parse();
-			Element idElement = doc.select("input[name=t]").first();
+			Element idElement = doc.select("input[name=searchthreadid]").first();
+			if (idElement == null) {
+				idElement = doc.select("input[name=t]").first();
+			}
 			if (idElement != null) {
 				String id = idElement.attr("value");
 				mod.setId(id);
@@ -149,7 +152,7 @@ public class ModDataParser {
 								}
 							}
 						} else {
-							mod.setVersion("First post not edited. Version 0.");
+							mod.setVersion("First version (Post not edited)");
 						}
 						if (!mod.getVersion().equals("")) {
 							mod.isValid = true;
@@ -286,6 +289,9 @@ public class ModDataParser {
 	}
 	
 	public static String getDownloadLink(Mod mod) {
+		if (!mod.getDownloadLink().equals("")) {
+			return mod.getDownloadLink();
+		}
 		try {
 			Response res = Http.get(mod.getLink());
 			Document doc = res.parse();
@@ -317,14 +323,15 @@ public class ModDataParser {
 				testLabel = new JLabel("No files detected. Download a file manually from the website.");
 			}
 			Font font = testLabel.getFont();
-			Font boldFont = new Font(font.getFontName(), Font.BOLD, font.getSize()+2);
-			titleLabel.setFont(boldFont);
-			testLabel.setFont(boldFont);
+			Font boldFont1 = new Font(font.getFontName(), Font.BOLD, font.getSize()+2);
+			Font boldFont2 = new Font(font.getFontName(), Font.BOLD, font.getSize()+1);
+			titleLabel.setFont(boldFont1);
+			testLabel.setFont(boldFont2);
 			panel.add(titleLabel);
 			panel.add(testLabel);
 			ButtonGroup group = new ButtonGroup();
 			boolean firstSelected = false;
-			String downloadLink = null;
+			String downloadLink = "";
 			Browser browser = new Browser();
 			if (links != null && links.size() > 0) {
 				for (int i = 0; i < links.size(); i++) {
@@ -341,20 +348,23 @@ public class ModDataParser {
 				if (reply == JOptionPane.YES_OPTION) {
 					downloadLink = group.getSelection().getActionCommand();
 				} else {
-					browser.show(mod.getLink());
+					browser.show(mod.getLink(), mod);
 				}
 			} else {
 				JOptionPane.showOptionDialog(null, panel, "Install file", JOptionPane.OK_OPTION, JOptionPane.PLAIN_MESSAGE, null, new String[]{"Open website and download file from there"}, null);
-				browser.show(mod.getLink());
+				browser.show(mod.getLink(), mod);
 			}
 			if (!browser.downloadFile.equals("")) {
 				downloadLink = browser.downloadFile;
+			}
+			if (browser.modReloaded == true) {
+				downloadLink = getDownloadLink(mod);
 			}
 			return downloadLink;
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		return null;
+		return "";
 	}
 	
 	private static String getSpaceportDownloadUrl(String id) {

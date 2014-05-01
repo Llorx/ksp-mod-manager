@@ -13,6 +13,8 @@ import org.jsoup.Connection.Response;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
+import java.util.UUID;
+
 public class Mod implements Serializable {
 	public static final int TYPE_NONE = -1;
 	public static final int TYPE_SPACEPORT = 0;
@@ -23,6 +25,8 @@ public class Mod implements Serializable {
 	public static final int TYPE_DROPBOX_FOLDER = 5;
 	public static final int TYPE_LINK = 6;
 	
+	
+	private UUID uniqueId = UUID.randomUUID();
 	private String id = "";
 	private String name = "";
 	private String status = "";
@@ -30,13 +34,17 @@ public class Mod implements Serializable {
 	private List<ModFile> installFiles = new ArrayList<ModFile>();
 	private String link = "";
 	private String downloadLink = "";
-	public String downloadedFile = "";
 	private boolean updatable = true;
 	private int type = Mod.TYPE_NONE;
-	public boolean isValid = false;
+	private boolean installable = false;
 	
+	public String downloadedFile = "";
+	public boolean isValid = false;
 	public boolean nameChanged = false;
 	
+	public UUID getUniqueId() {
+		return uniqueId;
+	}
 	public String getId() {
 		String prefix = "";
 		switch(this.getType()) {
@@ -91,7 +99,13 @@ public class Mod implements Serializable {
 	public List<ModFile> getInstalledFiles() {
 		return this.installFiles;
 	}
+	public boolean isInstallable() {
+		return this.installable;
+	}
 	
+	public void setUniqueId(UUID uniqueId) {
+		this.uniqueId = uniqueId;
+	}
 	public void setId(String id) {
 		this.id = id;
 	}
@@ -117,6 +131,10 @@ public class Mod implements Serializable {
 	public void setType(int type) {
 		this.type = type;
 	}
+	public void setInstallable(boolean installable) {
+		this.installable = installable;
+	}
+	
 	
 	public boolean addInstalledFile(Path path, boolean updated) {
 		return addInstalledFile(new ModFile(path, updated));
@@ -139,8 +157,13 @@ public class Mod implements Serializable {
 		return !found;
 	}
 	
-	public Mod(String name, String link) {
+	public void reloadMod(String link) {
+		this.reloadMod(this.getName(), link, this.isInstallable());
+	}
+	public void reloadMod(String name, String link, boolean installable) {
+		this.setInstallable(installable);
 		this.setLink(link);
+		this.setDownloadLink("");
 		this.setName(name);
 		try {
 			if (link.length() == 0) {
@@ -188,6 +211,9 @@ public class Mod implements Serializable {
 			}
 		} catch (Exception e) {
 		}
+	}
+	public Mod(String name, String link, boolean installable) {
+		this.reloadMod(name, link, installable);
 	}
 };
 

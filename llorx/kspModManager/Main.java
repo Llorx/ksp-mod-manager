@@ -32,6 +32,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import java.net.URL;
+import java.net.URI;
 import java.net.HttpURLConnection;
 import java.net.URLEncoder;
 
@@ -250,8 +251,11 @@ public class Main extends JFrame implements ActionListener {
 	}
 	
 	void uninstallMod(Mod mod, boolean alerts) {
-		String modFileName = "data" + File.separator + replaceCharacters(mod.getId());
+		String modFileName = "data" + File.separator + mod.getUniqueId().toString();
 		DirIO.clearDir(modFileName);
+		if (mod.isInstallable() == false) {
+			return;
+		}
 		List<Path> updatedFiles = new ArrayList<Path>();
 		List<Path> parents = new ArrayList<Path>();
 		List<Path> parentsNotRemoved = new ArrayList<Path>();
@@ -315,7 +319,6 @@ public class Main extends JFrame implements ActionListener {
 					}
 				}
 			}  catch (Exception e) {
-				
 			}
 		}
 		boolean notRemoved = false;
@@ -377,7 +380,7 @@ public class Main extends JFrame implements ActionListener {
 	
 	boolean removeMod(Mod mod) {
 		for (int i = 0; i < modList.size(); i++) {
-			if (modList.get(i).getId().equals(mod.getId())) {
+			if (modList.get(i).getUniqueId() == mod.getUniqueId()) {
 				modList.remove(i);
 				listUpdate(true, -1);
 				return true;
@@ -419,6 +422,9 @@ public class Main extends JFrame implements ActionListener {
 	}
 	
 	boolean downloadMod(Mod mod) {
+		if (mod.isInstallable() == false) {
+			return true;
+		}
 		InputStream in = null;
 		FileOutputStream fout = null;
 		try {
@@ -437,7 +443,7 @@ public class Main extends JFrame implements ActionListener {
 			
 			if (mod.getDownloadLink().equals("")) {
 				String link = ModDataParser.getDownloadLink(mod);
-				if (link == null) {
+				if (link.equals("")) {
 					alertBox(null, mod.getName() + ": Error getting download link.");
 					return false;
 				} else {
@@ -449,9 +455,12 @@ public class Main extends JFrame implements ActionListener {
 				String dlink = Http.getDownloadLink(mod.getDownloadLink());
 				if (dlink == null) {
 					Browser browser = new Browser();
-					browser.show(mod.getDownloadLink());
+					browser.show(mod.getDownloadLink(), mod);
 					if (!browser.downloadFile.equals("")) {
 						dlink = browser.downloadFile;
+					}
+					if (browser.modReloaded == true) {
+						return downloadMod(mod);
 					}
 				}
 				if (dlink != null && Http.fileType(dlink) ==  Http.ZIP_EXTENSION) {
@@ -463,6 +472,7 @@ public class Main extends JFrame implements ActionListener {
 			}
 			
 			HttpURLConnection conn = Http.getConnection(mod.getDownloadLink());
+			mod.setDownloadLink("");
 			if (conn == null) {
 				alertBox(null, mod.getName() + ": Error getting download link.");
 				return false;
@@ -705,7 +715,7 @@ public class Main extends JFrame implements ActionListener {
 			if (gameDatas.size() == 0) {
 				gameDatas.add(modExtract);
 				if (Zip.test(modType, Zip.NO_MAINFOLDER)) {
-					String modMainDir = replaceCharacters(this.mod.getName()) + "_" + replaceCharacters(this.mod.getId());
+					String modMainDir = replaceCharacters(this.mod.getName()) + "_" + this.mod.getUniqueId().toString();
 					modExtract = modExtract + File.separator + modMainDir;
 				}
 			} else {
@@ -750,25 +760,34 @@ public class Main extends JFrame implements ActionListener {
 		@Override
 		public void run() {
 			List<Mod> tempModList = new ArrayList(modList);
+			List<Mod> noInstallList = new ArrayList();
 			int updated = 0;
+			int updatedInstall = 0;
 			for (Mod mod: tempModList) {
 				if (closingApp == false && mod.getStatus().equals("")) {
 					mod.setStatus(" - [Checking...] -");
 					setMod(mod);
-					Mod newMod = new Mod(mod.getName(), mod.getLink());
+					Mod newMod = new Mod(mod.getName(), mod.getLink(), mod.isInstallable());
+					newMod.setUniqueId(mod.getUniqueId());
 					if (!mod.getVersion().equals(newMod.getVersion())) {
 						updated++;
-						uninstallMod(mod, false);
-						newMod.setStatus(" - [Downloading - 0%] -");
-						setMod(newMod);
-						if (downloadMod(newMod)) {
-							newMod.setStatus(" - [Install Queue] -");
+						if (newMod.isInstallable()) {
+							uninstallMod(mod, false);
+							updatedInstall++;
+							newMod.setStatus(" - [Downloading - 0%] -");
 							setMod(newMod);
-							synchronized(lock) {
-								modInstallQeue.add(newMod);
+							if (downloadMod(newMod)) {
+								newMod.setStatus(" - [Install Queue] -");
+								setMod(newMod);
+								synchronized(lock) {
+									modInstallQeue.add(newMod);
+								}
+							} else {
+								removeMod(newMod);
 							}
 						} else {
-							removeMod(newMod);
+							noInstallList.add(mod);
+							setMod(newMod);
 						}
 					} else {
 						mod.setStatus("");
@@ -778,7 +797,34 @@ public class Main extends JFrame implements ActionListener {
 			}
 			saveConfigFile();
 			if (closingApp == false) {
-				alertBox(null, "Added " + updated + " mods to the Install Queue.");
+				if (updated > 0) {
+					alertBox(null, "Found " + updated + " mods updated. " + (updatedInstall==updated?"All":(updatedInstall>0?updatedInstall:"None")) + " of them were added to the Install Queue.");
+				}
+				if (noInstallList.size() > 0) {
+					JPanel panel = new JPanel();
+					panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
+					JLabel titleLabel = new JLabel(noInstallList.size() + " mod " + (noInstallList.size()==1?"is":"are") + " marked to not install:");
+					titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+					panel.add(titleLabel);
+					for (Mod m: noInstallList) {
+						JButton b = new JButton(m.getName());
+						b.setAlignmentX(Component.CENTER_ALIGNMENT);
+						b.addActionListener(new ActionListener() {
+							@Override
+							public void actionPerformed(ActionEvent e) {
+								try {
+									Desktop.getDesktop().browse(new URI(m.getLink()));
+								} catch (Exception ee) {
+								}
+							}
+						});
+						panel.add(b);
+					}
+					JLabel footerLabel = new JLabel("Click the buttons to open website.");
+					footerLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+					panel.add(footerLabel);
+					JOptionPane.showMessageDialog(null, panel, "Readme files", JOptionPane.PLAIN_MESSAGE);
+				}
 				synchronized(lock) {
 					asyncDThread = null;
 					if (modInstallQeue.size() > 0) {
@@ -788,10 +834,6 @@ public class Main extends JFrame implements ActionListener {
 				}
 			}
 		}
-	}
-	
-	String getModDir(Mod mod) {
-		return replaceCharacters(mod.getName()) + "_" + replaceCharacters(mod.getId());
 	}
 	
 	String replaceCharacters(String str) {
@@ -842,14 +884,16 @@ public class Main extends JFrame implements ActionListener {
 		String name = "";
 		JTextField modName = new JTextField();
 		JTextField modUrl = new JTextField();
+		JCheckBox check = new JCheckBox("Do not install, only warn me when there's a new version.");
 		int reply = -1;
 		
 		do {
 			final JComponent[] inputs = new JComponent[] {
 				new JLabel("Name this mod"),
 				modName,
-				new JLabel("Mod URL"),
-				modUrl
+				new JLabel("URL"),
+				modUrl,
+				check
 			};
 			reply = JOptionPane.showConfirmDialog(null, inputs, "Add new mod", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
 			if (reply == JOptionPane.OK_OPTION) {
@@ -863,13 +907,19 @@ public class Main extends JFrame implements ActionListener {
 		}
 		
 		synchronized(lock) {
-			Mod mod = new Mod(name, urlText);
-			mod.setStatus(" - [Download Queue] -");
+			Mod mod = new Mod(name, urlText, !check.isSelected());
+			if (mod.isInstallable()) {
+				mod.setStatus(" - [Download Queue] -");
+			}
 			if (mod.isValid == false) {
-				alertBox(null, "Error installing mod " + mod.getName() + ". Check the URL.");
+				alertBox(null, "Error getting mod " + mod.getName() + ". Check the URL.");
 			} else {
-				modQeue.add(mod);
 				setMod(mod);
+				if (mod.isInstallable() == false) {
+					saveConfigFile();
+				} else {
+					modQeue.add(mod);
+				}
 				nextDownload();
 			}
 		}
@@ -880,7 +930,7 @@ public class Main extends JFrame implements ActionListener {
 		int tabley = 0;
 		synchronized(lock) {
 			for (tabley = 0; tabley < modList.size(); tabley++) {
-				if (modList.get(tabley).getId().equals(mod.getId())) {
+				if (modList.get(tabley).getUniqueId() == mod.getUniqueId()) {
 					modList.set(tabley, mod);
 					found = true;
 					break;
@@ -944,7 +994,7 @@ public class Main extends JFrame implements ActionListener {
 				for(Mod mlist: modList) {
 					if (mlist.getStatus().equals("")) {
 						try {
-							String modFileName = "data" + File.separator + replaceCharacters(mlist.getId()) + File.separator + "Mod.object";
+							String modFileName = "data" + File.separator + mlist.getUniqueId().toString() + File.separator + "Mod.object";
 							File modFile = new File(modFileName);
 							if (!modFile.getParentFile().exists()) {
 								modFile.getParentFile().mkdirs();
