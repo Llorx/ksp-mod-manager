@@ -143,40 +143,18 @@ public class Mod implements Serializable {
 		this.setLink(link);
 		this.setName(name);
 		try {
-			Response res = null;
 			if (link.length() == 0) {
 				this.setType(Mod.TYPE_NONE);
 			} else {
+				Response res = null;
 				if (link.indexOf("kerbalspaceport.com/") > -1) {
 					this.setType(Mod.TYPE_SPACEPORT);
 				} else if (link.indexOf("forum.kerbalspaceprogram.com/threads/") > -1) {
 					this.setType(Mod.TYPE_KSPFORUM);
-					int index = link.indexOf("-");
-					if (index > -1) {
-						link = link.substring(0,index);
-						this.setLink(link);
-						res = Http.get(link);
-					}
 				} else if (link.indexOf("github.com/") > -1) {
 					this.setType(Mod.TYPE_GITHUB);
-					res = Http.get(link);
-					Document doc = res.parse();
-					Element linkElement = doc.select("a[class=js-current-repository js-repo-home-link]").first();
-					if (linkElement != null) {
-						link = linkElement.attr("abs:href") + "/releases/latest";
-						this.setLink(link);
-						res = Http.get(link);
-					}
 				} else if (link.indexOf("bitbucket.org/") > -1) {
 					this.setType(Mod.TYPE_BITBUCKET);
-					res = Http.get(link);
-					Document doc = res.parse();
-					Element linkElement = doc.select("a[id=repo-downloads-link]").first();
-					if (linkElement != null) {
-						link = linkElement.attr("abs:href");
-						this.setLink(link);
-						res = Http.get(link);
-					}
 				} else if (link.indexOf("dropbox.com/") > -1) {
 					this.setType(Mod.TYPE_DROPBOX_FOLDER);
 				} else {

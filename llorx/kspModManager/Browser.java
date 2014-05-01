@@ -13,8 +13,6 @@ import javafx.stage.Stage;
 
 import javax.swing.JButton;
 import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JFrame;
 import javax.swing.JDialog;
 import javax.swing.SwingUtilities;
 import javax.swing.border.LineBorder;
@@ -81,7 +79,6 @@ public class Browser {
 		LineBorder line = new LineBorder(Color.darkGray, 1);
 		loading.setBorder(line);
 		
-		
 		final JButton jButton = new JButton("<< Back");
 		dialog.add(jButton);
 		jButton.setSize(new Dimension(100, 27));
@@ -119,11 +116,10 @@ public class Browser {
 									  middle.y - (dialog.getHeight() / 2));
 		dialog.setLocation(newLocation);
 		
-		
 		dialog.setVisible(true);
 	}
 	
-	private void initFX(final JFXPanel fxPanel, String url) {
+	private void initFX(JFXPanel fxPanel, String url) {
 
 		Group group = new Group();
 		Scene scene = new Scene(group);
@@ -136,7 +132,6 @@ public class Browser {
 		webView.setMaxSize(width, height);
 		webView.setContextMenuEnabled(false);
 		
-			// Obtain the webEngine to navigate
 		webEngine = webView.getEngine();
 		webWorker = webEngine.getLoadWorker();
 		

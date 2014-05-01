@@ -57,6 +57,7 @@ public class ModDataParser {
 	
 	private static void parseSpaceportData(Mod mod, Response res) {
 		try {
+			res = Http.get(mod.getLink());
 			Document doc = res.parse();
 			Element el = doc.select("input[name=addonid]").first();
 			if (el != null) {
@@ -83,6 +84,11 @@ public class ModDataParser {
 	
 	private static void parseKspForumData(Mod mod, Response res) {
 		try {
+			int index = mod.getLink().indexOf("-");
+			if (index > -1) {
+				mod.setLink(mod.getLink().substring(0,index));
+			}
+			res = Http.get(mod.getLink());
 			Document doc = res.parse();
 			Element idElement = doc.select("input[name=t]").first();
 			if (idElement != null) {
@@ -95,7 +101,7 @@ public class ModDataParser {
 				String gmt = "GMT-5";
 				if (time != null) {
 					String tim = time.text();
-					int index = tim.indexOf("GMT");
+					index = tim.indexOf("GMT");
 					if (index > -1) {
 						int index2 = tim.indexOf(".", index);
 						if (index2 > -1) {
@@ -113,7 +119,7 @@ public class ModDataParser {
 						Element edited = post.select("blockquote[class*=lastedited]").first();
 						if (edited != null) {
 							String editedDate = edited.text();
-							int index = editedDate.indexOf(";");
+							index = editedDate.indexOf(";");
 							if (index > -1) {
 								index = index + 1;
 								int index2 = editedDate.indexOf(".", index);
@@ -152,7 +158,6 @@ public class ModDataParser {
 				}
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
 		}
 	}
 	private static void parseJenkinsData(Mod mod, Response res) {
@@ -189,26 +194,33 @@ public class ModDataParser {
 	}
 	private static void parseGitHubData(Mod mod, Response res) {
 		try {
+			res = Http.get(mod.getLink());
 			Document doc = res.parse();
-			Element el = doc.select("a[class=js-current-repository js-repo-home-link]").first();
-			if (el != null) {
-				String id = el.attr("href");
-				id.replace("/", "_");
-				if (id.substring(0,1).equals("_")) {
-					id = id.substring(1);
-				}
-				if (id.length() > 0) {
-					el = doc.select("local-time").first();
-					if (el != null) {
-						String version = el.attr("datetime");
-						mod.setVersion(version);
-						el = doc.select("ul[class=release-downloads]").first();
+			Element linkElement = doc.select("a[class=js-current-repository js-repo-home-link]").first();
+			if (linkElement != null) {
+				mod.setLink(linkElement.attr("abs:href") + "/releases/latest");
+				res = Http.get(mod.getLink());
+				doc = res.parse();
+				Element el = doc.select("a[class=js-current-repository js-repo-home-link]").first();
+				if (el != null) {
+					String id = el.attr("href");
+					id.replace("/", "_");
+					if (id.substring(0,1).equals("_")) {
+						id = id.substring(1);
+					}
+					if (id.length() > 0) {
+						el = doc.select("local-time").first();
 						if (el != null) {
-							el = el.select("a[class=button primary]").first();
+							String version = el.attr("datetime");
+							mod.setVersion(version);
+							el = doc.select("ul[class=release-downloads]").first();
 							if (el != null) {
-								String download = el.attr("abs:href");
-								mod.setDownloadLink(download);
-								mod.isValid = true;
+								el = el.select("a[class=button primary]").first();
+								if (el != null) {
+									String download = el.attr("abs:href");
+									mod.setDownloadLink(download);
+									mod.isValid = true;
+								}
 							}
 						}
 					}
@@ -219,34 +231,41 @@ public class ModDataParser {
 	}
 	private static void parseBitBucketData(Mod mod, Response res) {
 		try {
+			res = Http.get(mod.getLink());
 			Document doc = res.parse();
-			Element el = doc.select("a[class=repo-link]").first();
-			if (el != null) {
-				String id = el.attr("href");
-				id.replace("/", "_");
-				if (id.substring(0,1).equals("_")) {
-					id = id.substring(1);
-				}
-				if (id.length() > 0) {
-					mod.setId(id);
-					Element table = doc.select("table[id=uploaded-files]").first();
-					if (table != null) {
-						Element lastDownload = table.select("tr[id^=download-]").first();
-						if (lastDownload != null) {
-							Element data = lastDownload.select("td[class=date]").first();
-							if (data != null) {
-								data = data.select("time").first();
+			Element linkElement = doc.select("a[id=repo-downloads-link]").first();
+			if (linkElement != null) {
+				mod.setLink(linkElement.attr("abs:href"));
+				res = Http.get(mod.getLink());
+				doc = res.parse();
+				Element el = doc.select("a[class=repo-link]").first();
+				if (el != null) {
+					String id = el.attr("href");
+					id.replace("/", "_");
+					if (id.substring(0,1).equals("_")) {
+						id = id.substring(1);
+					}
+					if (id.length() > 0) {
+						mod.setId(id);
+						Element table = doc.select("table[id=uploaded-files]").first();
+						if (table != null) {
+							Element lastDownload = table.select("tr[id^=download-]").first();
+							if (lastDownload != null) {
+								Element data = lastDownload.select("td[class=date]").first();
 								if (data != null) {
-									String version = data.attr("datetime");
-									mod.setVersion(version);
-									Element dlink = lastDownload.select("td[class=name]").first();
-									if (dlink != null) {
-										dlink = dlink.select("a").first();
+									data = data.select("time").first();
+									if (data != null) {
+										String version = data.attr("datetime");
+										mod.setVersion(version);
+										Element dlink = lastDownload.select("td[class=name]").first();
 										if (dlink != null) {
-											String link = dlink.attr("abs:href");
-											if (!link.equals("")) {
-												mod.setDownloadLink(link);
-												mod.isValid = true;
+											dlink = dlink.select("a").first();
+											if (dlink != null) {
+												String link = dlink.attr("abs:href");
+												if (!link.equals("")) {
+													mod.setDownloadLink(link);
+													mod.isValid = true;
+												}
 											}
 										}
 									}
@@ -305,7 +324,7 @@ public class ModDataParser {
 			panel.add(testLabel);
 			ButtonGroup group = new ButtonGroup();
 			boolean firstSelected = false;
-			String downloadLink = "";
+			String downloadLink = null;
 			Browser browser = new Browser();
 			if (links != null && links.size() > 0) {
 				for (int i = 0; i < links.size(); i++) {
