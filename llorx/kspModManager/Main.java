@@ -52,6 +52,9 @@ import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.net.CookiePolicy;
 
+import javax.swing.JPopupMenu;
+import javax.swing.JMenuItem;
+
 class MyTableModel extends AbstractTableModel {
 	
 	private List<Mod> mods;
@@ -204,6 +207,74 @@ public class Main extends JFrame implements ActionListener {
 		barraDesplazamiento.setBounds(2,47,490,400);
 		add(barraDesplazamiento);
 		mainList.getTableHeader().setReorderingAllowed(false);
+		
+		mainList.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				int r = mainList.rowAtPoint(e.getPoint());
+				if (r >= 0 && r < mainList.getRowCount()) {
+					mainList.setRowSelectionInterval(r, r);
+				} else {
+					mainList.clearSelection();
+				}
+
+				int rowindex = mainList.getSelectedRow();
+				if (rowindex < 0)
+					return;
+				if (e.isPopupTrigger() && e.getComponent() instanceof JTable ) {
+					JPopupMenu popup = new MyPopMenu();
+					popup.show(e.getComponent(), e.getX(), e.getY());
+				}
+			}
+		});
+	}
+	
+	Mod getSelectedMod() {
+		synchronized(lock) {
+			if (mainList.getSelectedRow() > -1) {
+				return modList.get(mainList.getSelectedRow());
+			}
+		}
+		return null;
+	}
+	
+	void renameSelectedMod() {
+		synchronized(lock) {
+			Mod mod = getSelectedMod();
+			if (mod.getStatus().equals("")) {
+				String newName = JOptionPane.showInputDialog("What is the new name?");
+				if (newName != null && newName.length() > 0) {
+					mod.setName(newName);
+					setMod(mod);
+					saveConfigFile();
+				}
+			}
+		}
+	}
+	
+	void updateSelectedMod() {
+		synchronized(lock) {
+			Mod mod = getSelectedMod();
+			if (mod.getStatus().equals("")) {
+				List<Mod> list = new ArrayList<Mod>();
+				list.add(mod);
+				updateMods(list);
+			}
+		}
+	}
+	
+	void removeSelectedMod() {
+		synchronized(lock) {
+			Mod mod = getSelectedMod();
+			if (mod.getStatus().equals("")) {
+				int reply = JOptionPane.showConfirmDialog(null, "Are you sure?", "Delete Mod", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+				if (reply == JOptionPane.YES_OPTION) {
+					removeMod(mod);
+					uninstallMod(mod);
+					saveConfigFile();
+				}
+			}
+		}
 	}
 	
 	public void actionPerformed(ActionEvent e) {
@@ -214,29 +285,9 @@ public class Main extends JFrame implements ActionListener {
 				nextInstall();
 			}
 		} else if(e.getSource()==renameBut) {
-			synchronized(lock) {
-				if (mainList.getSelectedRow() > -1 && modList.get(mainList.getSelectedRow()).getStatus().equals("")) {
-					String newName = JOptionPane.showInputDialog("What is the new name?");
-					if (newName != null && newName.length() > 0) {
-						Mod mod = modList.get(mainList.getSelectedRow());
-						mod.setName(newName);
-						setMod(mod);
-						saveConfigFile();
-					}
-				}
-			}
+			renameSelectedMod();
 		} else if(e.getSource()==removeBut) {
-			synchronized(lock) {
-				if (mainList.getSelectedRow() > -1 && modList.get(mainList.getSelectedRow()).getStatus().equals("")) {
-					int reply = JOptionPane.showConfirmDialog(null, "Are you sure?", "Delete Mod", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
-					if (reply == JOptionPane.YES_OPTION) {
-						Mod mod = modList.get(mainList.getSelectedRow());
-						removeMod(mod);
-						uninstallMod(mod);
-						saveConfigFile();
-					}
-				}
-			}
+			removeSelectedMod();
 		} else if(e.getSource()==updateBut) {
 			synchronized(lock) {
 				updateMods();
@@ -753,17 +804,18 @@ public class Main extends JFrame implements ActionListener {
 	}
 	
 	public class MyAsyncModUpdate implements Runnable {
-
-		MyAsyncModUpdate() {
+		List<Mod> updateList;
+		
+		MyAsyncModUpdate(List<Mod> updateList) {
+			this.updateList = new ArrayList(updateList);
 		}
 
 		@Override
 		public void run() {
-			List<Mod> tempModList = new ArrayList(modList);
 			List<Mod> noInstallList = new ArrayList();
 			int updated = 0;
 			int updatedInstall = 0;
-			for (Mod mod: tempModList) {
+			for (Mod mod: this.updateList) {
 				if (closingApp == false && mod.getStatus().equals("")) {
 					mod.setStatus(" - [Checking...] -");
 					setMod(mod);
@@ -871,9 +923,13 @@ public class Main extends JFrame implements ActionListener {
 	}
 	
 	void updateMods() {
+		updateMods(modList);
+	}
+	
+	void updateMods(List<Mod> list) {
 		if (closingApp == false && (asyncDThread == null || !asyncDThread.isAlive())) {
 			installBut.setEnabled(false);
-			Runnable asyncDRunnable = new MyAsyncModUpdate();
+			Runnable asyncDRunnable = new MyAsyncModUpdate(list);
 			asyncDThread = new Thread(asyncDRunnable);
 			asyncDThread.start();
 		}
@@ -1127,6 +1183,43 @@ public class Main extends JFrame implements ActionListener {
 		return node.getNodeValue();
 	}
 	
+	class MyPopMenu extends JPopupMenu implements ActionListener {
+		JMenuItem menuItemRename = new JMenuItem("Rename", new ImageIcon(getClass().getResource("/images/rename.gif")));
+		JMenuItem menuItemOpenLink = new JMenuItem("Open mod link in browser", new ImageIcon(getClass().getResource("/images/link.gif")));
+		JMenuItem menuItemUpdate = new JMenuItem("Update this mod", new ImageIcon(getClass().getResource("/images/update.png")));
+		JMenuItem menuItemDelete = new JMenuItem("Delete", new ImageIcon(getClass().getResource("/images/delete.png")));
+		
+		public MyPopMenu() {
+			this.add(menuItemRename);
+			this.add(menuItemOpenLink);
+			this.addSeparator();
+			this.add(menuItemUpdate);
+			this.addSeparator();
+			this.add(menuItemDelete);
+			
+			menuItemRename.addActionListener(this);
+			menuItemOpenLink.addActionListener(this);
+			menuItemUpdate.addActionListener(this);
+			menuItemDelete.addActionListener(this);
+		}
+		
+		public void actionPerformed(ActionEvent e) {
+			if(e.getSource()==menuItemRename) {
+				renameSelectedMod();
+			} else if(e.getSource()==menuItemOpenLink) {
+				Mod mod = getSelectedMod();
+				try {
+					Desktop.getDesktop().browse(new URI(mod.getLink()));
+				} catch (Exception ee) {
+				}
+			} else if(e.getSource()==menuItemUpdate) {
+				updateSelectedMod();
+			} else if(e.getSource()==menuItemDelete) {
+				removeSelectedMod();
+			}
+		}
+	}
+	
 	public static void main(String[] ar) {
 		CookieHandler.setDefault( new CookieManager( null, CookiePolicy.ACCEPT_ALL ) );
 		if ((new File("temp")).exists()) {
@@ -1141,10 +1234,6 @@ public class Main extends JFrame implements ActionListener {
 		window.setLocationRelativeTo(null);
 		
 		window.loadConfigFile();
-	}
-	
-	class MyCustomWindowAdapter extends WindowAdapter {
-		
 	}
 }
 
