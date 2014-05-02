@@ -17,6 +17,7 @@ import java.awt.FlowLayout;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.tree.*;
 
 import java.io.File;
@@ -102,21 +103,44 @@ class MyTableModel extends AbstractTableModel {
 	
 	@Override
 	public Object getValueAt(int rowIndex, int columnIndex) {
-		Mod mod = (Mod)mods.get(rowIndex);
-		Object value = null;
-		switch (columnIndex) {
+		return mods.get(rowIndex);
+	}
+}
+
+class IconTextCellRenderer extends DefaultTableCellRenderer {
+	
+	ImageIcon install = new ImageIcon(getClass().getResource("/images/install.png"));
+	ImageIcon online = new ImageIcon(getClass().getResource("/images/link.gif"));
+	
+	@Override
+	public Component getTableCellRendererComponent(JTable table,
+			Object value,
+			boolean isSelected,
+			boolean hasFocus,
+			int row,
+			int column) {
+		super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+		Mod mod = (Mod)value;
+		
+		switch (column) {
 			case 0:
-				value = mod.getName();
+				if (mod.isInstallable()) {
+					setIcon(install);
+				} else {
+					setIcon(online);
+				}
+				setText(mod.getName());
 				break;
 			case 1:
+				setIcon(null);
 				if (!mod.getStatus().equals("")) {
-					value = mod.getStatus();
+					setText(mod.getStatus());
 				} else {
-					value = (mod.isInstallable()?"[Installed]":"[Online]") + " " + mod.getVersion();
+					setText(mod.getVersion());
 				}
 				break;
 		}
-		return value;
+		return this;
 	}
 }
 
@@ -209,6 +233,9 @@ public class Main extends JFrame implements ActionListener {
 		add(barraDesplazamiento);
 		mainList.getTableHeader().setReorderingAllowed(false);
 		
+		IconTextCellRenderer cellRenderer = new IconTextCellRenderer();
+		mainList.setDefaultRenderer(Object.class, cellRenderer);
+		
 		mainList.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseReleased(MouseEvent e) {
@@ -292,6 +319,7 @@ public class Main extends JFrame implements ActionListener {
 						removeMod(mod);
 					} else {
 						mod.setInstallable(false);
+						listUpdate(false, mainList.getSelectedRow());
 					}
 					saveConfigFile();
 				}
@@ -828,6 +856,7 @@ public class Main extends JFrame implements ActionListener {
 	
 	public class MyAsyncModUpdate implements Runnable {
 		List<Mod> updateList;
+		public List<Mod> updateList2;
 		boolean force;
 		
 		MyAsyncModUpdate(List<Mod> updateList, boolean force) {
@@ -1215,16 +1244,29 @@ public class Main extends JFrame implements ActionListener {
 	class MyPopMenu extends JPopupMenu implements ActionListener {
 		JMenuItem menuItemRename = new JMenuItem("Rename", new ImageIcon(getClass().getResource("/images/rename.gif")));
 		JMenuItem menuItemOpenLink = new JMenuItem("Open mod link in browser", new ImageIcon(getClass().getResource("/images/link.gif")));
-		JMenuItem menuItemReinstall = new JMenuItem("Reinstall", new ImageIcon(getClass().getResource("/images/install.png")));
+		JMenuItem menuItemReinstall = new JMenuItem("Redownload", new ImageIcon(getClass().getResource("/images/install.png")));
 		JMenuItem menuItemUpdate = new JMenuItem("Check update", new ImageIcon(getClass().getResource("/images/update.png")));
 		JMenuItem menuItemDelete = new JMenuItem("Uninstall", new ImageIcon(getClass().getResource("/images/delete.png")));
 		
+		JMenuItem menuItemAllDisabled = new JMenuItem("Disabled because of Download/Install operations");
+		
 		public MyPopMenu(Mod mod) {
 			if (mod.isInstallable() == false) {
-				menuItemReinstall.setText("Install");
+				menuItemReinstall.setText("Download");
 				menuItemDelete.setText("Remove");
 			}
-		
+			
+			if (asyncDThread != null) {
+				menuItemRename.setEnabled(false);
+				menuItemReinstall.setEnabled(false);
+				menuItemUpdate.setEnabled(false);
+				menuItemDelete.setEnabled(false);
+				
+				menuItemAllDisabled.setEnabled(false);
+				this.add(menuItemAllDisabled);
+				this.addSeparator();
+			}
+			
 			this.add(menuItemRename);
 			this.add(menuItemOpenLink);
 			this.addSeparator();
