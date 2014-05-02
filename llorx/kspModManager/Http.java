@@ -8,6 +8,9 @@ import org.jsoup.nodes.Element;
 import java.net.URL;
 import java.net.HttpURLConnection;
 
+import java.util.Map;
+import java.util.List;
+
 public class Http {
 	public static final int HTML = -1;
 	public static final int ZIP_EXTENSION = 0;
@@ -34,9 +37,9 @@ public class Http {
 					return Http.ZIP_EXTENSION;
 				} else {
 					String header = conn.getHeaderField("Content-Disposition");
-					if(header != null && header.indexOf("=") != -1) {
+					if (header != null && header.indexOf("=") != -1) {
 						String filename = header.split("=")[1];
-						if (filename.indexOf(".") > -1 && filename.substring(filename.indexOf(".")+1).equals("zip")) {
+						if (filename.lastIndexOf(".") > -1 && filename.substring(filename.lastIndexOf(".")+1).equals("zip")) {
 							return Http.ZIP_EXTENSION;
 						} else {
 							return Http.OTHER_EXTENSION;

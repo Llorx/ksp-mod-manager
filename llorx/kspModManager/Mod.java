@@ -156,6 +156,10 @@ public class Mod implements Serializable {
 		}
 		return !found;
 	}
+	public void clearInstalledFiles() {
+		this.installFiles = new ArrayList<ModFile>();
+	}
+	
 	
 	public void reloadMod(String link) {
 		this.reloadMod(this.getName(), link, this.isInstallable());

@@ -12,6 +12,7 @@ import java.awt.Color;
 import java.awt.event.*;
 import java.awt.Font;
 import java.awt.Desktop;
+import java.awt.FlowLayout;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -111,7 +112,7 @@ class MyTableModel extends AbstractTableModel {
 				if (!mod.getStatus().equals("")) {
 					value = mod.getStatus();
 				} else {
-					value = mod.getVersion();
+					value = (mod.isInstallable()?"[Installed]":"[Online]") + " " + mod.getVersion();
 				}
 				break;
 		}
@@ -222,7 +223,7 @@ public class Main extends JFrame implements ActionListener {
 				if (rowindex < 0)
 					return;
 				if (e.isPopupTrigger() && e.getComponent() instanceof JTable ) {
-					JPopupMenu popup = new MyPopMenu();
+					JPopupMenu popup = new MyPopMenu(getSelectedMod());
 					popup.show(e.getComponent(), e.getX(), e.getY());
 				}
 			}
@@ -263,14 +264,35 @@ public class Main extends JFrame implements ActionListener {
 		}
 	}
 	
+	void reinstallSelectedMod() {
+		synchronized(lock) {
+			Mod mod = getSelectedMod();
+			if (mod.getStatus().equals("")) {
+				mod.setInstallable(true);
+				List<Mod> list = new ArrayList<Mod>();
+				list.add(mod);
+				updateMods(list, true);
+			}
+		}
+	}
+	
 	void removeSelectedMod() {
 		synchronized(lock) {
 			Mod mod = getSelectedMod();
 			if (mod.getStatus().equals("")) {
-				int reply = JOptionPane.showConfirmDialog(null, "Are you sure?", "Delete Mod", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
-				if (reply == JOptionPane.YES_OPTION) {
-					removeMod(mod);
+				int reply;
+				if (mod.isInstallable() == false) {
+					reply = JOptionPane.showConfirmDialog(null, "Do you want to remove the mod from the list?", "Delete Mod", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+				} else {
+					reply = JOptionPane.showOptionDialog(null, "Do you want to delete it completely or only uninstall it but keep track of new versions?", "Delete Mod", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, new String[]{"Delete completely", "Uninstall but keep in list to check versions", "Cancel"}, null);
+				}
+				if (reply == JOptionPane.YES_OPTION || (mod.isInstallable() && reply == JOptionPane.NO_OPTION)) {
 					uninstallMod(mod);
+					if (reply == JOptionPane.YES_OPTION) {
+						removeMod(mod);
+					} else {
+						mod.setInstallable(false);
+					}
 					saveConfigFile();
 				}
 			}
@@ -302,8 +324,6 @@ public class Main extends JFrame implements ActionListener {
 	}
 	
 	void uninstallMod(Mod mod, boolean alerts) {
-		String modFileName = "data" + File.separator + mod.getUniqueId().toString();
-		DirIO.clearDir(modFileName);
 		if (mod.isInstallable() == false) {
 			return;
 		}
@@ -339,6 +359,7 @@ public class Main extends JFrame implements ActionListener {
 				}
 			}
 		}
+		mod.clearInstalledFiles();
 		for (Path f: parents) {
 			boolean sameFile = false;
 			try {
@@ -430,6 +451,8 @@ public class Main extends JFrame implements ActionListener {
 	}
 	
 	boolean removeMod(Mod mod) {
+		String modFileName = "data" + File.separator + mod.getUniqueId().toString();
+		DirIO.clearDir(modFileName);
 		for (int i = 0; i < modList.size(); i++) {
 			if (modList.get(i).getUniqueId() == mod.getUniqueId()) {
 				modList.remove(i);
@@ -805,9 +828,11 @@ public class Main extends JFrame implements ActionListener {
 	
 	public class MyAsyncModUpdate implements Runnable {
 		List<Mod> updateList;
+		boolean force;
 		
-		MyAsyncModUpdate(List<Mod> updateList) {
+		MyAsyncModUpdate(List<Mod> updateList, boolean force) {
 			this.updateList = new ArrayList(updateList);
+			this.force = force;
 		}
 
 		@Override
@@ -821,7 +846,7 @@ public class Main extends JFrame implements ActionListener {
 					setMod(mod);
 					Mod newMod = new Mod(mod.getName(), mod.getLink(), mod.isInstallable());
 					newMod.setUniqueId(mod.getUniqueId());
-					if (!mod.getVersion().equals(newMod.getVersion())) {
+					if (force == true || !mod.getVersion().equals(newMod.getVersion())) {
 						updated++;
 						if (newMod.isInstallable()) {
 							uninstallMod(mod, false);
@@ -923,13 +948,17 @@ public class Main extends JFrame implements ActionListener {
 	}
 	
 	void updateMods() {
-		updateMods(modList);
+		updateMods(modList, false);
 	}
 	
 	void updateMods(List<Mod> list) {
+		updateMods(list, false);
+	}
+	
+	void updateMods(List<Mod> list, boolean force) {
 		if (closingApp == false && (asyncDThread == null || !asyncDThread.isAlive())) {
 			installBut.setEnabled(false);
-			Runnable asyncDRunnable = new MyAsyncModUpdate(list);
+			Runnable asyncDRunnable = new MyAsyncModUpdate(list, force);
 			asyncDThread = new Thread(asyncDRunnable);
 			asyncDThread.start();
 		}
@@ -1186,21 +1215,30 @@ public class Main extends JFrame implements ActionListener {
 	class MyPopMenu extends JPopupMenu implements ActionListener {
 		JMenuItem menuItemRename = new JMenuItem("Rename", new ImageIcon(getClass().getResource("/images/rename.gif")));
 		JMenuItem menuItemOpenLink = new JMenuItem("Open mod link in browser", new ImageIcon(getClass().getResource("/images/link.gif")));
-		JMenuItem menuItemUpdate = new JMenuItem("Update this mod", new ImageIcon(getClass().getResource("/images/update.png")));
-		JMenuItem menuItemDelete = new JMenuItem("Delete", new ImageIcon(getClass().getResource("/images/delete.png")));
+		JMenuItem menuItemReinstall = new JMenuItem("Reinstall", new ImageIcon(getClass().getResource("/images/install.png")));
+		JMenuItem menuItemUpdate = new JMenuItem("Check update", new ImageIcon(getClass().getResource("/images/update.png")));
+		JMenuItem menuItemDelete = new JMenuItem("Uninstall", new ImageIcon(getClass().getResource("/images/delete.png")));
 		
-		public MyPopMenu() {
+		public MyPopMenu(Mod mod) {
+			if (mod.isInstallable() == false) {
+				menuItemReinstall.setText("Install");
+				menuItemDelete.setText("Remove");
+			}
+		
 			this.add(menuItemRename);
 			this.add(menuItemOpenLink);
 			this.addSeparator();
+			this.add(menuItemReinstall);
 			this.add(menuItemUpdate);
 			this.addSeparator();
 			this.add(menuItemDelete);
 			
 			menuItemRename.addActionListener(this);
 			menuItemOpenLink.addActionListener(this);
+			menuItemReinstall.addActionListener(this);
 			menuItemUpdate.addActionListener(this);
 			menuItemDelete.addActionListener(this);
+			
 		}
 		
 		public void actionPerformed(ActionEvent e) {
@@ -1212,6 +1250,8 @@ public class Main extends JFrame implements ActionListener {
 					Desktop.getDesktop().browse(new URI(mod.getLink()));
 				} catch (Exception ee) {
 				}
+			} else if(e.getSource()==menuItemReinstall) {
+				reinstallSelectedMod();
 			} else if(e.getSource()==menuItemUpdate) {
 				updateSelectedMod();
 			} else if(e.getSource()==menuItemDelete) {
@@ -1360,27 +1400,29 @@ class DirIO {
 
 	private static boolean cDir(String folder) {
 		Path dir = Paths.get(folder);
-		try {
-			Files.walkFileTree(dir, new SimpleFileVisitor<Path>() {
-				@Override
-				public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-					Files.delete(file);
-					return CONTINUE;
-				}
-				
-				@Override
-				public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-					if (exc == null) {
-						Files.delete(dir);
+		if (Files.exists(dir)) {
+			try {
+				Files.walkFileTree(dir, new SimpleFileVisitor<Path>() {
+					@Override
+					public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+						Files.delete(file);
 						return CONTINUE;
-					} else {
-						throw exc;
 					}
-				}
-	 
-			});
-		} catch (Exception e) {
-			return false;
+					
+					@Override
+					public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+						if (exc == null) {
+							Files.delete(dir);
+							return CONTINUE;
+						} else {
+							throw exc;
+						}
+					}
+		 
+				});
+			} catch (Exception e) {
+				return false;
+			}
 		}
 		return true;
 	}
