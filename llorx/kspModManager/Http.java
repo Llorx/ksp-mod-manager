@@ -39,6 +39,9 @@ public class Http {
 					String header = conn.getHeaderField("Content-Disposition");
 					if (header != null && header.indexOf("=") != -1) {
 						String filename = header.split("=")[1];
+						filename = filename.replace("\\", "_");
+						filename = filename.replace("/", "_");
+						filename = filename.replace("\"", "");
 						if (filename.lastIndexOf(".") > -1 && filename.substring(filename.lastIndexOf(".")+1).equals("zip")) {
 							return Http.ZIP_EXTENSION;
 						} else {

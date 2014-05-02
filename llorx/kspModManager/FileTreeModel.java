@@ -22,7 +22,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
  * 
  * @version $Id: FileTree.java,v 1.9 2004/02/23 03:39:22 ian Exp $
  * @author Ian Darwin
- * @moded by Llorx to add CheckBoxes
+ * @moded by Llorx to add CheckBoxes and fit KSP Mod Manager
  */
 public class FileTreeModel extends JPanel {
   /** Construct a FileTree */
@@ -69,15 +69,35 @@ public class FileTreeModel extends JPanel {
     // Make two passes, one for Dirs and one for Files. This is #1.
     for (int i = 0; i < ol.size(); i++) {
       String thisObject = (String) ol.elementAt(i);
-      String newPath;
-      if (curPath.equals("."))
-        newPath = thisObject;
-      else
-        newPath = curPath + File.separator + thisObject;
-      if ((f = new File(newPath)).isDirectory())
-        addNodes(curDir, f);
-      else
-        files.addElement(thisObject);
+      String[] exceptionList = {"source", "sources", "*.txt", "*.asciidoc", "*.md"};
+      String thisObjectLower = thisObject.toLowerCase();
+      boolean exclude = false;
+      for (String exc: exceptionList) {
+        if (exc.startsWith("*.")) {
+          exc = exc.substring(2);
+          int index = thisObjectLower.lastIndexOf(".");
+          if (index > -1) {
+            if (exc.equals(thisObjectLower.substring(index+1))) {
+              exclude = true;
+              break;
+            }
+          }
+        } else if (thisObjectLower.equals(exc)) {
+          exclude = true;
+          break;
+        }
+      }
+      if (exclude == false) {
+        String newPath;
+        if (curPath.equals("."))
+          newPath = thisObject;
+        else
+          newPath = curPath + File.separator + thisObject;
+        if ((f = new File(newPath)).isDirectory())
+          addNodes(curDir, f);
+        else
+          files.addElement(thisObject);
+      }
     }
     // Pass two: for files.
     for (int fnum = 0; fnum < files.size(); fnum++)

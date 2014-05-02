@@ -158,7 +158,7 @@ public class Browser {
 								int reply = JOptionPane.showConfirmDialog(null, "Selected:\n" + lastClick + "\nAre you sure?", "Sure?", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
 								if (reply == JOptionPane.YES_OPTION) {
 									downloadFile = lastClick;
-									Platform.runLater(new Runnable(){
+									Platform.runLater(new Runnable() {
 										@Override
 										public void run() {
 											webWorker.cancel();

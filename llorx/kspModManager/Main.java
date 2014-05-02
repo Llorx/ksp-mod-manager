@@ -269,7 +269,7 @@ public class Main extends JFrame implements ActionListener {
 	void renameSelectedMod() {
 		synchronized(lock) {
 			Mod mod = getSelectedMod();
-			if (mod.getStatus().equals("")) {
+			if (mod != null && mod.getStatus().equals("")) {
 				String newName = JOptionPane.showInputDialog("What is the new name?");
 				if (newName != null && newName.length() > 0) {
 					mod.setName(newName);
@@ -283,7 +283,7 @@ public class Main extends JFrame implements ActionListener {
 	void updateSelectedMod() {
 		synchronized(lock) {
 			Mod mod = getSelectedMod();
-			if (mod.getStatus().equals("")) {
+			if (mod != null && mod.getStatus().equals("")) {
 				List<Mod> list = new ArrayList<Mod>();
 				list.add(mod);
 				updateMods(list);
@@ -294,7 +294,7 @@ public class Main extends JFrame implements ActionListener {
 	void reinstallSelectedMod() {
 		synchronized(lock) {
 			Mod mod = getSelectedMod();
-			if (mod.getStatus().equals("")) {
+			if (mod != null && mod.getStatus().equals("")) {
 				mod.setInstallable(true);
 				List<Mod> list = new ArrayList<Mod>();
 				list.add(mod);
@@ -306,7 +306,7 @@ public class Main extends JFrame implements ActionListener {
 	void removeSelectedMod() {
 		synchronized(lock) {
 			Mod mod = getSelectedMod();
-			if (mod.getStatus().equals("")) {
+			if (mod != null && mod.getStatus().equals("")) {
 				int reply;
 				if (mod.isInstallable() == false) {
 					reply = JOptionPane.showConfirmDialog(null, "Do you want to remove the mod from the list?", "Delete Mod", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
@@ -879,6 +879,7 @@ public class Main extends JFrame implements ActionListener {
 						updated++;
 						if (newMod.isInstallable()) {
 							uninstallMod(mod, false);
+							removeMod(mod);
 							updatedInstall++;
 							newMod.setStatus(" - [Downloading - 0%] -");
 							setMod(newMod);
@@ -903,7 +904,7 @@ public class Main extends JFrame implements ActionListener {
 			}
 			saveConfigFile();
 			if (closingApp == false) {
-				if (updated > 0) {
+				if (updated > 0 && force == false) {
 					alertBox(null, "Found " + updated + " mods updated. " + (updatedInstall==updated?"All":(updatedInstall>0?updatedInstall:"None")) + " of them were added to the Install Queue.");
 				}
 				if (noInstallList.size() > 0) {
@@ -1250,8 +1251,11 @@ public class Main extends JFrame implements ActionListener {
 		
 		JMenuItem menuItemAllDisabled = new JMenuItem("Disabled because of Download/Install operations");
 		
+		Mod mod;
+		
 		public MyPopMenu(Mod mod) {
-			if (mod.isInstallable() == false) {
+			this.mod = mod;
+			if (this.mod.isInstallable() == false) {
 				menuItemReinstall.setText("Download");
 				menuItemDelete.setText("Remove");
 			}
@@ -1262,7 +1266,6 @@ public class Main extends JFrame implements ActionListener {
 				menuItemUpdate.setEnabled(false);
 				menuItemDelete.setEnabled(false);
 				
-				menuItemAllDisabled.setEnabled(false);
 				this.add(menuItemAllDisabled);
 				this.addSeparator();
 			}
@@ -1287,9 +1290,8 @@ public class Main extends JFrame implements ActionListener {
 			if(e.getSource()==menuItemRename) {
 				renameSelectedMod();
 			} else if(e.getSource()==menuItemOpenLink) {
-				Mod mod = getSelectedMod();
 				try {
-					Desktop.getDesktop().browse(new URI(mod.getLink()));
+					Desktop.getDesktop().browse(new URI(this.mod.getLink()));
 				} catch (Exception ee) {
 				}
 			} else if(e.getSource()==menuItemReinstall) {
