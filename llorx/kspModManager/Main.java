@@ -136,7 +136,10 @@ class IconTextCellRenderer extends DefaultTableCellRenderer {
 				if (!mod.getStatus().equals("")) {
 					setText(mod.getStatus());
 				} else {
-					setText(mod.getVersion());
+					if (mod.justUpdated == true) {
+						setIcon(online);
+					}
+					setText((mod.justUpdated == true?"[Just updated] ":"") + mod.getVersion());
 				}
 				break;
 		}
@@ -872,10 +875,14 @@ public class Main extends JFrame implements ActionListener {
 			for (Mod mod: this.updateList) {
 				if (closingApp == false && mod.getStatus().equals("")) {
 					mod.setStatus(" - [Checking...] -");
+					mod.justUpdated = false;
 					setMod(mod);
 					Mod newMod = new Mod(mod.getName(), mod.getLink(), mod.isInstallable());
 					newMod.setUniqueId(mod.getUniqueId());
 					if (force == true || !mod.getVersion().equals(newMod.getVersion())) {
+						if (!mod.getVersion().equals(newMod.getVersion())) {
+							newMod.justUpdated = true;
+						}
 						updated++;
 						if (newMod.isInstallable()) {
 							uninstallMod(mod, false);
@@ -893,7 +900,6 @@ public class Main extends JFrame implements ActionListener {
 								removeMod(newMod);
 							}
 						} else {
-							noInstallList.add(mod);
 							setMod(newMod);
 						}
 					} else {
@@ -907,7 +913,7 @@ public class Main extends JFrame implements ActionListener {
 				if (updated > 0 && force == false) {
 					alertBox(null, "Found " + updated + " mods updated. " + (updatedInstall==updated?"All":(updatedInstall>0?updatedInstall:"None")) + " of them were added to the Install Queue.");
 				}
-				if (noInstallList.size() > 0) {
+				/*if (noInstallList.size() > 0) {
 					JPanel panel = new JPanel();
 					panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
 					JLabel titleLabel = new JLabel(noInstallList.size() + " mod " + (noInstallList.size()==1?"is":"are") + " marked to not install:");
@@ -931,7 +937,7 @@ public class Main extends JFrame implements ActionListener {
 					footerLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 					panel.add(footerLabel);
 					JOptionPane.showMessageDialog(null, panel, "Readme files", JOptionPane.PLAIN_MESSAGE);
-				}
+				}*/
 				synchronized(lock) {
 					asyncDThread = null;
 					if (modInstallQeue.size() > 0) {

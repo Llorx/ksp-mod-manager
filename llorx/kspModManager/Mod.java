@@ -38,9 +38,11 @@ public class Mod implements Serializable {
 	private int type = Mod.TYPE_NONE;
 	private boolean installable = false;
 	
-	public String downloadedFile = "";
 	public boolean isValid = false;
-	public boolean nameChanged = false;
+	
+	public transient String downloadedFile = "";
+	public transient boolean nameChanged = false;
+	public transient boolean justUpdated = false;
 	
 	public UUID getUniqueId() {
 		return uniqueId;
