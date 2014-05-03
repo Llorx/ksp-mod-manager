@@ -133,13 +133,17 @@ class IconTextCellRenderer extends DefaultTableCellRenderer {
 				break;
 			case 1:
 				setIcon(null);
+				Font font = getFont();
+				setFont(font.deriveFont(font.getStyle() | Font.BOLD));
 				if (!mod.getStatus().equals("")) {
 					setText(mod.getStatus());
 				} else {
 					if (mod.justUpdated == true) {
 						setIcon(online);
+					} else {
+						setFont(font.deriveFont(font.getStyle() & ~Font.BOLD));
 					}
-					setText((mod.justUpdated == true?"[Just updated] ":"") + mod.getVersion());
+					setText((mod.justUpdated == true?"[New version"+(mod.isInstallable()?" installed":"")+"] ":"") + mod.getVersion());
 				}
 				break;
 		}
@@ -153,8 +157,7 @@ public class Main extends JFrame implements ActionListener {
 	
 	JButton configBut;
 	
-	JButton renameBut;
-	JButton removeBut;
+	JButton mmButton;
 	JButton updateBut;
 	
 	Document xmlDoc;
@@ -163,7 +166,7 @@ public class Main extends JFrame implements ActionListener {
 	List<Mod> modList = new ArrayList<Mod>();
 	JTable mainList;
 	
-	String kspDataFolder = "";
+	Mod moduleManagerMod = null;
 	
 	Thread asyncDThread = null;
 	
@@ -171,6 +174,8 @@ public class Main extends JFrame implements ActionListener {
 	List<Mod> modInstallQeue = new ArrayList<Mod>();
 	
 	Object lock = new Object();
+	
+	ManagerConfig config = new ManagerConfig();
 	
 	boolean closingApp = false;
 	
@@ -199,31 +204,26 @@ public class Main extends JFrame implements ActionListener {
 		Border empty = new EmptyBorder(1, 1, 1, 1);
 		CompoundBorder border = new CompoundBorder(line, empty);
 		
-		configBut=new JButton("Select KSP main folder");
-		configBut.setBounds(2,2,200,40);
+		configBut=new JButton("Config");
+		configBut.setBounds(2,2,150,40);
 		add(configBut);
 		configBut.addActionListener(this);
 		
 		downloadBut=new JButton("[+] Download mod");
-		downloadBut.setBounds(292,2,200,19);
+		downloadBut.setBounds(242,2,250,19);
 		add(downloadBut);
 		downloadBut.addActionListener(this);
 		
 		installBut=new JButton("Install Queued mods");
-		installBut.setBounds(292,23,200,19);
+		installBut.setBounds(242,23,250,19);
 		add(installBut);
 		installBut.addActionListener(this);
 		installBut.setEnabled(false);
 		
-		renameBut=new JButton("Rename Mod");
-		renameBut.setBounds(2,450,150,20);
-		add(renameBut);
-		renameBut.addActionListener(this);
-		
-		removeBut=new JButton("Delete Mod");
-		removeBut.setBounds(175,450,150,20);
-		add(removeBut);
-		removeBut.addActionListener(this);
+		mmButton=new JButton("Download Module Manager");
+		mmButton.setBounds(2,450,250,20);
+		add(mmButton);
+		mmButton.addActionListener(this);
 		
 		updateBut=new JButton("Check mod updates");
 		updateBut.setBounds(340,450,150,20);
@@ -273,7 +273,7 @@ public class Main extends JFrame implements ActionListener {
 		synchronized(lock) {
 			Mod mod = getSelectedMod();
 			if (mod != null && mod.getStatus().equals("")) {
-				String newName = JOptionPane.showInputDialog("What is the new name?");
+				String newName = JOptionPane.showInputDialog(null, "What is the new name?", mod.getName());
 				if (newName != null && newName.length() > 0) {
 					mod.setName(newName);
 					setMod(mod);
@@ -337,16 +337,21 @@ public class Main extends JFrame implements ActionListener {
 			synchronized(lock) {
 				nextInstall();
 			}
-		} else if(e.getSource()==renameBut) {
-			renameSelectedMod();
-		} else if(e.getSource()==removeBut) {
-			removeSelectedMod();
+		} else if(e.getSource()==mmButton) {
+			if (moduleManagerMod == null) {
+				moduleManagerMod = new Mod("Module Manager dll", config.moduleManagerLink, true);
+			}
+			if (moduleManagerMod.isValid == false) {
+				alertBox(null, "Error adding Module Manager Mod.");
+			} else {
+				getAddon(moduleManagerMod.getName(), moduleManagerMod.getLink());
+			}
 		} else if(e.getSource()==updateBut) {
 			synchronized(lock) {
 				updateMods();
 			}
 		} else if(e.getSource()==configBut) {
-			selectKspFolder();
+			openConfigWindow();
 		}
 	}
 	
@@ -362,7 +367,7 @@ public class Main extends JFrame implements ActionListener {
 		List<Path> parents = new ArrayList<Path>();
 		List<Path> parentsNotRemoved = new ArrayList<Path>();
 		
-		Path mainData = Paths.get(kspDataFolder);
+		Path mainData = Paths.get(config.kspDataFolder);
 		
 		for (ModFile f: mod.getInstalledFiles()) {
 			Path file = f.getPath();
@@ -646,7 +651,7 @@ public class Main extends JFrame implements ActionListener {
 		List<ModFile> copyFiles(String mainPath, String copyPath) {
 			List<ModFile> copied = new ArrayList<ModFile>();
 			
-			Path target = Paths.get(kspDataFolder);
+			Path target = Paths.get(config.kspDataFolder);
 			
 			Path dir = Paths.get(mainPath, copyPath);
 			Path mainDir = Paths.get(mainPath);
@@ -664,11 +669,8 @@ public class Main extends JFrame implements ActionListener {
 						if (destFile.exists()) {
 							copy = false;
 							f.setUpdated(true);
-							
 							if (forceCopy == -1) {
-
 								String relPath = relativePath.toFile().getPath();
-								
 								JCheckBox c = new JCheckBox("Remember this selection");
 								final JComponent[] inputs = new JComponent[] {
 									new JLabel("Do you want to overwrite this file?"),
@@ -691,12 +693,10 @@ public class Main extends JFrame implements ActionListener {
 							Files.copy(file, dest, StandardCopyOption.REPLACE_EXISTING);
 							copied.add(f);
 						}
-						
 						return CONTINUE;
 					}
 				});
 			} catch (Exception e) {
-				
 			}
 			return copied;
 		}
@@ -765,7 +765,24 @@ public class Main extends JFrame implements ActionListener {
 				JPanel gameDataPanel = new JPanel();
 				gameDataPanel.setLayout(new BoxLayout(gameDataPanel, BoxLayout.PAGE_AXIS));
 				
-				FileTreeModel f = new FileTreeModel(gdataFile);
+				String[] undeededFilesArray = new String[]{"(source)", "(sources)", "(.*)(.txt)", "(.*)(.asciidoc)", "(.*)(.md)"};
+				String[] mmArray = new String[]{"(modulemanager)(.*)(\\.dll)"};
+				int arraysize = 0;
+				if (config.excludeUnneededFiles == true) {
+					arraysize += undeededFilesArray.length;
+				}
+				if (config.excludeModuleManagerDll == true && !(moduleManagerMod != null && this.mod.getId().equals(moduleManagerMod.getId()))) {
+					arraysize += mmArray.length;
+				}
+				String[] excludeList = new String[arraysize];
+				if (config.excludeUnneededFiles == true) {
+					System.arraycopy(undeededFilesArray, 0, excludeList, 0, undeededFilesArray.length);
+				}
+				if (config.excludeModuleManagerDll == true && !(moduleManagerMod != null && this.mod.getId().equals(moduleManagerMod.getId()))) {
+					System.arraycopy(mmArray, 0, excludeList, (config.excludeUnneededFiles?undeededFilesArray.length:0), mmArray.length);
+				}
+				
+				FileTreeModel f = new FileTreeModel(gdataFile, excludeList);
 				f.setAlignmentX(Component.CENTER_ALIGNMENT);
 				TitledBorder title = BorderFactory.createTitledBorder(gdataTxt);
 				f.setBorder(BorderFactory.createTitledBorder(gdataTxt));
@@ -866,7 +883,7 @@ public class Main extends JFrame implements ActionListener {
 			this.updateList = new ArrayList(updateList);
 			this.force = force;
 		}
-
+		
 		@Override
 		public void run() {
 			List<Mod> noInstallList = new ArrayList();
@@ -1001,14 +1018,16 @@ public class Main extends JFrame implements ActionListener {
 	}
 	
 	void getAddon() {
-		String urlText = "";
-		String name = "";
+		getAddon("", "");
+	}
+	
+	void getAddon(String name, String urlText) {
 		JTextField modName = new JTextField();
 		JTextField modUrl = new JTextField();
 		JCheckBox check = new JCheckBox("Do not install, only warn me when there's a new version.");
-		int reply = -1;
+		int reply = JOptionPane.OK_OPTION;
 		
-		do {
+		while((urlText.length() == 0 || name.length() == 0) && reply == JOptionPane.OK_OPTION) {
 			final JComponent[] inputs = new JComponent[] {
 				new JLabel("Name this mod"),
 				modName,
@@ -1021,7 +1040,7 @@ public class Main extends JFrame implements ActionListener {
 				urlText = modUrl.getText();
 				name = modName.getText();
 			}
-		} while((urlText.length() == 0 || name.length() == 0) && reply == JOptionPane.OK_OPTION);
+		}
 		
 		if (reply != JOptionPane.OK_OPTION) {
 			return;
@@ -1029,6 +1048,13 @@ public class Main extends JFrame implements ActionListener {
 		
 		synchronized(lock) {
 			Mod mod = new Mod(name, urlText, !check.isSelected());
+			for (Mod m: modList) {
+				if (m.getId().equals(mod.getId())) {
+					alertBox(null, "That mod already exists in the mod list under name: " + m.getName());
+					return;
+				}
+			}
+			
 			if (mod.isInstallable()) {
 				mod.setStatus(" - [Download Queue] -");
 			}
@@ -1135,10 +1161,6 @@ public class Main extends JFrame implements ActionListener {
 			Element configElement = xmlDoc.createElement("config");
 			rootElement.appendChild(configElement);
 			
-			Element kspDataFolderElement = xmlDoc.createElement("kspDataFolder");
-			kspDataFolderElement.appendChild(xmlDoc.createTextNode(kspDataFolder));
-			configElement.appendChild(kspDataFolderElement);
-			
 			Element configVersionElement = xmlDoc.createElement("configVersion");
 			configVersionElement.appendChild(xmlDoc.createTextNode("1"));
 			configElement.appendChild(configVersionElement);
@@ -1148,6 +1170,15 @@ public class Main extends JFrame implements ActionListener {
 			DOMSource source = new DOMSource(xmlDoc);
 			StreamResult result = new StreamResult(f);
 			transformer.transform(source, result);
+			
+			File managerConfigFile = new File("data" + File.separator + "ManagerConfig.object");
+			if (!managerConfigFile.getParentFile().exists()) {
+				managerConfigFile.getParentFile().mkdirs();
+			}
+			ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(managerConfigFile));
+			out.writeObject(config);
+			out.close();
+			
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
@@ -1181,13 +1212,19 @@ public class Main extends JFrame implements ActionListener {
 					}
 				}
 				
+				try {
+					FileInputStream f_in = new FileInputStream("data" + File.separator + "ManagerConfig.object");
+					ObjectInputStream obj_in = new ObjectInputStream (f_in);
+					config = (ManagerConfig)obj_in.readObject();
+				} catch (Exception ex) {
+				}
+				
 				nodes = doc.getElementsByTagName("config");
 				if (nodes.getLength() > 0) {
 					Node node = nodes.item(0);
 					
 					if (node.getNodeType() == Node.ELEMENT_NODE) {
 						Element element = (Element) node;
-						kspDataFolder = getNodeValue("kspDataFolder", element);
 						
 						String configVersion = getNodeValue("configVersion", element);
 						if (configVersion.equals("1")) {
@@ -1199,47 +1236,17 @@ public class Main extends JFrame implements ActionListener {
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
-		File f = new File(kspDataFolder);
-		if (kspDataFolder.equals("") || !f.exists() || !f.isDirectory()) {
-			if (selectKspFolder() == false) {
+		File f = new File(config.kspDataFolder);
+		if (config.kspDataFolder.equals("") || !f.exists() || !f.isDirectory()) {
+			if (config.selectKspFolder(this) == false) {
 				System.exit(0);
 			}
 		}
 	}
 	
-	boolean selectKspFolder() {
-		boolean ok = false;
-		do {
-			int reply = JOptionPane.showConfirmDialog(null, "Please, select your KSP main installation folder.", "KSP main folder", JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE);
-			if (reply == JOptionPane.OK_OPTION) {
-				ok = askForKspFolder();
-			} else {
-				return false;
-			}
-		} while(ok == false);
+	void openConfigWindow() {
+		config.change(this);
 		saveConfigFile();
-		return true;
-	}
-	
-	boolean askForKspFolder() {
-		try {
-			JFileChooser j = new JFileChooser();
-			j.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-			int opt = j.showSaveDialog(this);
-			if (opt == JFileChooser.APPROVE_OPTION) {
-				String path = j.getSelectedFile().getCanonicalPath() + File.separator + "GameData";
-				File f = new File(path);
-				if (f.exists() && f.isDirectory()) {
-					kspDataFolder = f.getCanonicalPath();
-					return true;
-				} else {
-					alertBox(null, "This does not seems a KSP main installation folder.");
-				}
-			}
-		} catch (Exception ex) {
-			ex.printStackTrace();
-		}
-		return false;
 	}
 	
 	private static String getNodeValue(String tag, Element element) {

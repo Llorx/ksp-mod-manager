@@ -28,8 +28,11 @@ public class FileTreeModel extends JPanel {
   /** Construct a FileTree */
   
   public CheckTreeManager checkTreeManager;
+  private String[] exceptionList;
   
-  public FileTreeModel(File dir) {
+  public FileTreeModel(File dir, String[] exceptionList) {
+    this.exceptionList = exceptionList;
+    
     setLayout(new BorderLayout());
 
     // Make a tree list with all the nodes, and make it a JTree
@@ -69,20 +72,10 @@ public class FileTreeModel extends JPanel {
     // Make two passes, one for Dirs and one for Files. This is #1.
     for (int i = 0; i < ol.size(); i++) {
       String thisObject = (String) ol.elementAt(i);
-      String[] exceptionList = {"source", "sources", "*.txt", "*.asciidoc", "*.md"};
       String thisObjectLower = thisObject.toLowerCase();
       boolean exclude = false;
-      for (String exc: exceptionList) {
-        if (exc.startsWith("*.")) {
-          exc = exc.substring(2);
-          int index = thisObjectLower.lastIndexOf(".");
-          if (index > -1) {
-            if (exc.equals(thisObjectLower.substring(index+1))) {
-              exclude = true;
-              break;
-            }
-          }
-        } else if (thisObjectLower.equals(exc)) {
+      for (String exc: this.exceptionList) {
+        if (thisObjectLower.matches(exc)) {
           exclude = true;
           break;
         }
