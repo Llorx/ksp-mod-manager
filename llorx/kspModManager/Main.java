@@ -13,6 +13,8 @@ import java.awt.event.*;
 import java.awt.Font;
 import java.awt.Desktop;
 import java.awt.FlowLayout;
+import java.awt.Toolkit;
+import java.awt.datatransfer.DataFlavor;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -1024,6 +1026,13 @@ public class Main extends JFrame implements ActionListener {
 	void getAddon(String name, String urlText) {
 		JTextField modName = new JTextField();
 		JTextField modUrl = new JTextField();
+		try {
+			String cbData = (String)Toolkit.getDefaultToolkit().getSystemClipboard().getData(DataFlavor.stringFlavor);
+			if (cbData.startsWith("http://") || cbData.startsWith("https://")) {
+				modUrl.setText(cbData);
+			}
+		} catch( Exception e) {
+		}
 		JCheckBox check = new JCheckBox("Do not install, only warn me when there's a new version.");
 		int reply = JOptionPane.OK_OPTION;
 		
@@ -1035,6 +1044,7 @@ public class Main extends JFrame implements ActionListener {
 				modUrl,
 				check
 			};
+			modName.addAncestorListener( new RequestFocusListener() );
 			reply = JOptionPane.showConfirmDialog(null, inputs, "Add new mod", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
 			if (reply == JOptionPane.OK_OPTION) {
 				urlText = modUrl.getText();
