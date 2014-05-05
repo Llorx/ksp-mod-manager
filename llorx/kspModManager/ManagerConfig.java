@@ -28,6 +28,8 @@ import java.lang.ProcessBuilder;
 import java.util.ArrayList;
 
 public class ManagerConfig implements Serializable {
+	static final long serialVersionUID = -1060044609638745786L;
+	
 	public String kspDataFolder = "";
 	public String moduleManagerLink = "http://forum.kerbalspaceprogram.com/threads/55219";
 	public transient String defaultModuleManagerLink = "http://forum.kerbalspaceprogram.com/threads/55219";
@@ -81,7 +83,6 @@ public class ManagerConfig implements Serializable {
 					}
 				} while ((newMm != null && !newMm.isValid));
 				if (newMm != null && newMm.isValid) {
-					main.moduleManagerMod = newMm;
 					moduleManagerLink = newUrl;
 					main.alertBox(null, "URL updated.");
 				}
@@ -94,7 +95,6 @@ public class ManagerConfig implements Serializable {
 		restoreMmLinkBut.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				main.moduleManagerMod = new Mod("Module Manager dll", defaultModuleManagerLink, true);
 				moduleManagerLink = defaultModuleManagerLink;
 				main.alertBox(null, "URL restored.");
 			}
@@ -166,7 +166,7 @@ public class ManagerConfig implements Serializable {
 	
 	public void checkVersion() {
 		boolean updateFound = false;
-		String LMMversion = "v0.1alpha";
+		String LMMversion = "v0.1.2alpha";
 		try {
 			Document doc = Http.get("http://forum.kerbalspaceprogram.com/threads/78861").parse();
 			Element title = doc.select("span[class=threadtitle]").first();

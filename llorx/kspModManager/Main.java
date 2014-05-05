@@ -170,8 +170,6 @@ public class Main extends JFrame implements ActionListener {
 	List<Mod> modList = new ArrayList<Mod>();
 	JTable mainList;
 	
-	Mod moduleManagerMod = null;
-	
 	Thread asyncDThread = null;
 	
 	List<Mod> modQeue = new ArrayList<Mod>();
@@ -298,6 +296,44 @@ public class Main extends JFrame implements ActionListener {
 		}
 	}
 	
+	void changeLinkSelectedMod() {
+		synchronized(lock) {
+			Mod mod = getSelectedMod();
+			if (mod != null && mod.getStatus().equals("")) {
+				String oldLink = mod.getLink();
+				do {
+					String cbData = "";
+					try {
+						cbData = (String)Toolkit.getDefaultToolkit().getSystemClipboard().getData(DataFlavor.stringFlavor);
+						if (!(cbData.startsWith("http://") || cbData.startsWith("https://"))) {
+							cbData = "";
+						}
+					} catch (Exception e) {
+					}
+					String newLink = JOptionPane.showInputDialog(null, "What is the new download link?", cbData);
+					if (newLink != null && newLink.length() > 0) {
+						mod.reloadMod(newLink);
+					} else {
+						if (mod.isValid == false) {
+							mod.reloadMod(oldLink);
+						}
+						break;
+					}
+					if (mod.isValid == false) {
+						alertBox(null, "Error parsing link.");
+					}
+				} while (mod.isValid == false);
+				setMod(mod);
+				if (!mod.getLink().equals(oldLink)) {
+					int reply = JOptionPane.showConfirmDialog(null, "Mod link has changed. Do you want to download it from the new link?", "Link changed", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+					if (reply == JOptionPane.YES_OPTION) {
+						reinstallSelectedMod();
+					}
+				}
+			}
+		}
+	}
+	
 	void reinstallSelectedMod() {
 		synchronized(lock) {
 			Mod mod = getSelectedMod();
@@ -342,13 +378,11 @@ public class Main extends JFrame implements ActionListener {
 				nextInstall();
 			}
 		} else if(e.getSource()==mmButton) {
-			if (moduleManagerMod == null) {
-				moduleManagerMod = new Mod("Module Manager dll", config.moduleManagerLink, true);
-			}
-			if (moduleManagerMod.isValid == false) {
+			Mod mod = getAddon("Module Manager dll", config.moduleManagerLink);
+			if (mod == null) {
 				alertBox(null, "Error adding Module Manager Mod.");
 			} else {
-				getAddon(moduleManagerMod.getName(), moduleManagerMod.getLink());
+				mod.isMM = true;
 			}
 		} else if(e.getSource()==updateBut) {
 			synchronized(lock) {
@@ -666,6 +700,26 @@ public class Main extends JFrame implements ActionListener {
 		return null;
 	}
 	
+	String[] getExcludeList(Mod mod) {
+		String[] undeededFilesArray = new String[]{"(source)", "(sources)", "(.*)(.txt)", "(.*)(.asciidoc)", "(.*)(.md)"};
+		String[] mmArray = new String[]{"(modulemanager)(.*)(\\.dll)"};
+		int arraysize = 0;
+		if (config.excludeUnneededFiles == true) {
+			arraysize += undeededFilesArray.length;
+		}
+		if (config.excludeModuleManagerDll == true && mod.isMM == false) {
+			arraysize += mmArray.length;
+		}
+		String[] excludeList = new String[arraysize];
+		if (config.excludeUnneededFiles == true) {
+			System.arraycopy(undeededFilesArray, 0, excludeList, 0, undeededFilesArray.length);
+		}
+		if (config.excludeModuleManagerDll == true && mod.isMM == false) {
+			System.arraycopy(mmArray, 0, excludeList, (config.excludeUnneededFiles?undeededFilesArray.length:0), mmArray.length);
+		}
+		return excludeList;
+	}
+	
 	public class MyAsyncModInstall implements Runnable {
 	
 		private Mod mod;
@@ -685,12 +739,32 @@ public class Main extends JFrame implements ActionListener {
 			
 			try {
 				Files.walkFileTree(dir, new SimpleFileVisitor<Path>() {
+				
+					@Override
+					public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+						String fileNameLower = dir.getFileName().toString().toLowerCase();
+						for (String ex: getExcludeList(mod)) {
+							if (fileNameLower.matches(ex)) {
+								return SKIP_SUBTREE;
+							}
+						}
+						return FileVisitResult.CONTINUE;
+					}
+				
 					@Override
 					public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
 						Path relativePath = mainDir.relativize(file);
 						Path dest = target.resolve(relativePath);
 						File destFile = dest.toFile();
 						ModFile f = new ModFile(dest, false);
+						
+						String fileNameLower = file.getFileName().toString().toLowerCase();
+						
+						for (String ex: getExcludeList(mod)) {
+							if (fileNameLower.matches(ex)) {
+								return CONTINUE;
+							}
+						}
 						
 						boolean copy = true;
 						if (destFile.exists()) {
@@ -792,24 +866,7 @@ public class Main extends JFrame implements ActionListener {
 				JPanel gameDataPanel = new JPanel();
 				gameDataPanel.setLayout(new BoxLayout(gameDataPanel, BoxLayout.PAGE_AXIS));
 				
-				String[] undeededFilesArray = new String[]{"(source)", "(sources)", "(.*)(.txt)", "(.*)(.asciidoc)", "(.*)(.md)"};
-				String[] mmArray = new String[]{"(modulemanager)(.*)(\\.dll)"};
-				int arraysize = 0;
-				if (config.excludeUnneededFiles == true) {
-					arraysize += undeededFilesArray.length;
-				}
-				if (config.excludeModuleManagerDll == true && !(moduleManagerMod != null && this.mod.getId().equals(moduleManagerMod.getId()))) {
-					arraysize += mmArray.length;
-				}
-				String[] excludeList = new String[arraysize];
-				if (config.excludeUnneededFiles == true) {
-					System.arraycopy(undeededFilesArray, 0, excludeList, 0, undeededFilesArray.length);
-				}
-				if (config.excludeModuleManagerDll == true && !(moduleManagerMod != null && this.mod.getId().equals(moduleManagerMod.getId()))) {
-					System.arraycopy(mmArray, 0, excludeList, (config.excludeUnneededFiles?undeededFilesArray.length:0), mmArray.length);
-				}
-				
-				FileTreeModel f = new FileTreeModel(gdataFile, excludeList);
+				FileTreeModel f = new FileTreeModel(gdataFile, getExcludeList(this.mod));
 				f.setAlignmentX(Component.CENTER_ALIGNMENT);
 				TitledBorder title = BorderFactory.createTitledBorder(gdataTxt);
 				f.setBorder(BorderFactory.createTitledBorder(gdataTxt));
@@ -1044,11 +1101,11 @@ public class Main extends JFrame implements ActionListener {
 		}
 	}
 	
-	void getAddon() {
-		getAddon("", "");
+	Mod getAddon() {
+		return getAddon("", "");
 	}
 	
-	void getAddon(String name, String urlText) {
+	Mod getAddon(String name, String urlText) {
 		JTextField modName = new JTextField();
 		JTextField modUrl = new JTextField();
 		try {
@@ -1076,9 +1133,8 @@ public class Main extends JFrame implements ActionListener {
 				name = modName.getText();
 			}
 		}
-		
 		if (reply != JOptionPane.OK_OPTION) {
-			return;
+			return null;
 		}
 		
 		synchronized(lock) {
@@ -1086,7 +1142,7 @@ public class Main extends JFrame implements ActionListener {
 			for (Mod m: modList) {
 				if (m.getId().equals(mod.getId())) {
 					alertBox(null, "That mod already exists in the mod list under name: " + m.getName());
-					return;
+					return null;
 				}
 			}
 			
@@ -1103,8 +1159,10 @@ public class Main extends JFrame implements ActionListener {
 					modQeue.add(mod);
 				}
 				nextDownload();
+				return mod;
 			}
 		}
+		return null;
 	}
 	
 	void setMod(Mod mod) {
@@ -1197,7 +1255,7 @@ public class Main extends JFrame implements ActionListener {
 			rootElement.appendChild(configElement);
 			
 			Element configVersionElement = xmlDoc.createElement("configVersion");
-			configVersionElement.appendChild(xmlDoc.createTextNode("1"));
+			configVersionElement.appendChild(xmlDoc.createTextNode("2"));
 			configElement.appendChild(configVersionElement);
 			
 			TransformerFactory transformerFactory = TransformerFactory.newInstance();
@@ -1253,7 +1311,6 @@ public class Main extends JFrame implements ActionListener {
 					config = (ManagerConfig)obj_in.readObject();
 					config.main = this;
 				} catch (Exception ex) {
-					ErrorLog.log(ex);
 				}
 				
 				nodes = doc.getElementsByTagName("config");
@@ -1264,8 +1321,30 @@ public class Main extends JFrame implements ActionListener {
 						Element element = (Element) node;
 						
 						String configVersion = getNodeValue("configVersion", element);
-						if (configVersion.equals("1")) {
-							// Config is OK. This is for future config version changes.
+						if (configVersion.equals("2")) {
+							// Config is OK.
+						} else {
+							if (configVersion.equals("1")) {
+								Mod mod;
+								int tryouts = 0;
+								do {
+									mod = new Mod("Module manager dll", config.moduleManagerLink, true);
+									if (mod == null) {
+										tryouts++;
+										if (tryouts > 20) {
+											alertBox(null, "Error updating config. Try again in some minutes.");
+											System.exit(0);
+										}
+									}
+								} while(mod == null);
+								for(Mod m: modList) {
+									if (m.getId().equals(mod.getId())) {
+										m.isMM = true;
+										saveConfigFile();
+										break;
+									}
+								}
+							}
 						}
 					}
 				}
@@ -1299,6 +1378,7 @@ public class Main extends JFrame implements ActionListener {
 	class MyPopMenu extends JPopupMenu implements ActionListener {
 		JMenuItem menuItemRename = new JMenuItem("Rename", new ImageIcon(getClass().getResource("/images/rename.gif")));
 		JMenuItem menuItemOpenLink = new JMenuItem("Open mod link in browser", new ImageIcon(getClass().getResource("/images/link.gif")));
+		JMenuItem menuItemChangeLink = new JMenuItem("Change mod link", new ImageIcon(getClass().getResource("/images/download_link.png")));
 		JMenuItem menuItemReinstall = new JMenuItem("Redownload", new ImageIcon(getClass().getResource("/images/install.png")));
 		JMenuItem menuItemUpdate = new JMenuItem("Check update", new ImageIcon(getClass().getResource("/images/update.png")));
 		JMenuItem menuItemDelete = new JMenuItem("Uninstall", new ImageIcon(getClass().getResource("/images/delete.png")));
@@ -1317,6 +1397,7 @@ public class Main extends JFrame implements ActionListener {
 			if (asyncDThread != null) {
 				menuItemRename.setEnabled(false);
 				menuItemReinstall.setEnabled(false);
+				menuItemChangeLink.setEnabled(false);
 				menuItemUpdate.setEnabled(false);
 				menuItemDelete.setEnabled(false);
 				
@@ -1325,7 +1406,9 @@ public class Main extends JFrame implements ActionListener {
 			}
 			
 			this.add(menuItemRename);
+			this.addSeparator();
 			this.add(menuItemOpenLink);
+			this.add(menuItemChangeLink);
 			this.addSeparator();
 			this.add(menuItemReinstall);
 			this.add(menuItemUpdate);
@@ -1334,6 +1417,7 @@ public class Main extends JFrame implements ActionListener {
 			
 			menuItemRename.addActionListener(this);
 			menuItemOpenLink.addActionListener(this);
+			menuItemChangeLink.addActionListener(this);
 			menuItemReinstall.addActionListener(this);
 			menuItemUpdate.addActionListener(this);
 			menuItemDelete.addActionListener(this);
@@ -1348,6 +1432,8 @@ public class Main extends JFrame implements ActionListener {
 					Desktop.getDesktop().browse(new URI(this.mod.getLink()));
 				} catch (Exception ee) {
 				}
+			} else if(e.getSource()==menuItemChangeLink) {
+				changeLinkSelectedMod();
 			} else if(e.getSource()==menuItemReinstall) {
 				reinstallSelectedMod();
 			} else if(e.getSource()==menuItemUpdate) {
@@ -1552,7 +1638,6 @@ class DirIO {
 							throw exc;
 						}
 					}
-		 
 				});
 			} catch (Exception e) {
 				return false;

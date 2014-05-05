@@ -16,6 +16,8 @@ import org.jsoup.nodes.Element;
 import java.util.UUID;
 
 public class Mod implements Serializable {
+	static final long serialVersionUID = 2874434645244941775L;
+	
 	public static final int TYPE_NONE = -1;
 	public static final int TYPE_SPACEPORT = 0;
 	public static final int TYPE_KSPFORUM = 1;
@@ -37,6 +39,8 @@ public class Mod implements Serializable {
 	private boolean updatable = true;
 	private int type = Mod.TYPE_NONE;
 	private boolean installable = false;
+	
+	public boolean isMM = false;
 	
 	public boolean isValid = false;
 	
@@ -171,6 +175,7 @@ public class Mod implements Serializable {
 		this.setLink(link);
 		this.setDownloadLink("");
 		this.setName(name);
+		this.isValid = false;
 		try {
 			if (link.length() == 0) {
 				this.setType(Mod.TYPE_NONE);

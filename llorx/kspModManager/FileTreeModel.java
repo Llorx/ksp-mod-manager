@@ -28,10 +28,10 @@ public class FileTreeModel extends JPanel {
   /** Construct a FileTree */
   
   public CheckTreeManager checkTreeManager;
-  private String[] exceptionList;
+  private String[] excludeList;
   
-  public FileTreeModel(File dir, String[] exceptionList) {
-    this.exceptionList = exceptionList;
+  public FileTreeModel(File dir, String[] excludeList) {
+    this.excludeList = excludeList;
     
     setLayout(new BorderLayout());
 
@@ -74,7 +74,7 @@ public class FileTreeModel extends JPanel {
       String thisObject = (String) ol.elementAt(i);
       String thisObjectLower = thisObject.toLowerCase();
       boolean exclude = false;
-      for (String exc: this.exceptionList) {
+      for (String exc: this.excludeList) {
         if (thisObjectLower.matches(exc)) {
           exclude = true;
           break;
