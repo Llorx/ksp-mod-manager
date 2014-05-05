@@ -978,30 +978,29 @@ public class Main extends JFrame implements ActionListener {
 					mod.setStatus(" - [Checking...] -");
 					mod.justUpdated = false;
 					setMod(mod);
-					Mod newMod = new Mod(mod.getName(), mod.getLink(), mod.isInstallable());
-					newMod.setUniqueId(mod.getUniqueId());
-					if (force == true || !mod.getVersion().equals(newMod.getVersion())) {
-						if (!mod.getVersion().equals(newMod.getVersion())) {
-							newMod.justUpdated = true;
+					boolean newVersion = mod.checkVersion();
+					if (newVersion || force == true) {
+						if (newVersion) {
+							mod.justUpdated = true;
 						}
 						updated++;
-						if (newMod.isInstallable()) {
+						if (mod.isInstallable()) {
 							uninstallMod(mod, false);
 							removeMod(mod);
 							updatedInstall++;
-							newMod.setStatus(" - [Downloading - 0%] -");
-							setMod(newMod);
-							if (downloadMod(newMod)) {
-								newMod.setStatus(" - [Install Queue] -");
-								setMod(newMod);
+							mod.setStatus(" - [Downloading - 0%] -");
+							setMod(mod);
+							if (downloadMod(mod)) {
+								mod.setStatus(" - [Install Queue] -");
+								setMod(mod);
 								synchronized(lock) {
-									modInstallQeue.add(newMod);
+									modInstallQeue.add(mod);
 								}
 							} else {
-								removeMod(newMod);
+								removeMod(mod);
 							}
 						} else {
-							setMod(newMod);
+							setMod(mod);
 						}
 					} else {
 						mod.setStatus("");
@@ -1255,7 +1254,7 @@ public class Main extends JFrame implements ActionListener {
 			rootElement.appendChild(configElement);
 			
 			Element configVersionElement = xmlDoc.createElement("configVersion");
-			configVersionElement.appendChild(xmlDoc.createTextNode("2"));
+			configVersionElement.appendChild(xmlDoc.createTextNode("3"));
 			configElement.appendChild(configVersionElement);
 			
 			TransformerFactory transformerFactory = TransformerFactory.newInstance();
@@ -1321,10 +1320,10 @@ public class Main extends JFrame implements ActionListener {
 						Element element = (Element) node;
 						
 						String configVersion = getNodeValue("configVersion", element);
-						if (configVersion.equals("2")) {
+						if (configVersion.equals("3")) {
 							// Config is OK.
 						} else {
-							if (configVersion.equals("1")) {
+							if (configVersion.equals("1") || configVersion.equals("2")) {
 								Mod mod;
 								int tryouts = 0;
 								do {
@@ -1478,7 +1477,7 @@ public class Main extends JFrame implements ActionListener {
 			System.exit(0);
 		} else {
 			if (ar.length > 0 && ar[0].equals("-u2")) {
-				JOptionPane.showMessageDialog(null, "Update done.", "Done!", JOptionPane.PLAIN_MESSAGE);
+				JOptionPane.showMessageDialog(null, "Update done. Changelog:\n - Module Manager Manager fixes", "Done!", JOptionPane.PLAIN_MESSAGE);
 			}
 			CookieHandler.setDefault( new CookieManager( null, CookiePolicy.ACCEPT_ALL ) );
 			if ((new File("temp")).exists()) {

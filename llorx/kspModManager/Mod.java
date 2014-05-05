@@ -166,7 +166,11 @@ public class Mod implements Serializable {
 		this.installFiles = new ArrayList<ModFile>();
 	}
 	
-	
+	public boolean checkVersion() {
+		String oldVersion = this.getVersion();
+		this.reloadMod(this.getLink());
+		return !oldVersion.equals(this.getVersion());
+	}
 	public void reloadMod(String link) {
 		this.reloadMod(this.getName(), link, this.isInstallable());
 	}
