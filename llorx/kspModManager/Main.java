@@ -87,7 +87,7 @@ class MyTableModel extends AbstractTableModel {
 				name = "Mod name";
 				break;
 			case 1:
-				name = "Installed version";
+				name = "Latest date";
 				break;
 		}
 		return name;
@@ -115,6 +115,7 @@ class IconTextCellRenderer extends DefaultTableCellRenderer {
 	
 	ImageIcon install = new ImageIcon(getClass().getResource("/images/install.png"));
 	ImageIcon online = new ImageIcon(getClass().getResource("/images/link.gif"));
+	SimpleDateFormat sdfDate = new SimpleDateFormat("d MMM yyyy - kk:mm:ss");
 	
 	@Override
 	public Component getTableCellRendererComponent(JTable table,
@@ -147,7 +148,9 @@ class IconTextCellRenderer extends DefaultTableCellRenderer {
 					} else {
 						setFont(font.deriveFont(font.getStyle() & ~Font.BOLD));
 					}
-					setText((mod.justUpdated == true?"[New version"+(mod.isInstallable()?" installed":"")+"] ":"") + mod.getVersion());
+					if (mod.getLastDate() != null) {
+						setText((mod.justUpdated == true?"[New version"+(mod.isInstallable()?" installed":"")+"] ":"") + this.sdfDate.format(mod.getLastDate()));
+					}
 				}
 				break;
 		}
@@ -1254,7 +1257,7 @@ public class Main extends JFrame implements ActionListener {
 			rootElement.appendChild(configElement);
 			
 			Element configVersionElement = xmlDoc.createElement("configVersion");
-			configVersionElement.appendChild(xmlDoc.createTextNode("3"));
+			configVersionElement.appendChild(xmlDoc.createTextNode("4"));
 			configElement.appendChild(configVersionElement);
 			
 			TransformerFactory transformerFactory = TransformerFactory.newInstance();
@@ -1319,11 +1322,11 @@ public class Main extends JFrame implements ActionListener {
 					if (node.getNodeType() == Node.ELEMENT_NODE) {
 						Element element = (Element) node;
 						
-						String configVersion = getNodeValue("configVersion", element);
-						if (configVersion.equals("3")) {
+						int configVersion = Integer.parseInt(getNodeValue("configVersion", element));
+						if (configVersion == 4) {
 							// Config is OK.
 						} else {
-							if (configVersion.equals("1") || configVersion.equals("2")) {
+							if (configVersion <= 3) {
 								Mod mod;
 								int tryouts = 0;
 								do {
@@ -1339,10 +1342,13 @@ public class Main extends JFrame implements ActionListener {
 								for(Mod m: modList) {
 									if (m.getId().equals(mod.getId())) {
 										m.isMM = true;
-										saveConfigFile();
-										break;
+									}
+									if (m.getLastDate() == null) {
+										m.setLastDate(new Date());
 									}
 								}
+								listUpdate(true, -1);
+								saveConfigFile();
 							}
 						}
 					}

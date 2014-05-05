@@ -44,10 +44,13 @@ public class Mod implements Serializable {
 	
 	public boolean isValid = false;
 	
+	private Date lastDate;
+	
 	public transient String downloadedFile = "";
 	public transient boolean nameChanged = false;
 	public transient boolean justUpdated = false;
 	
+	// Gets
 	public UUID getUniqueId() {
 		return uniqueId;
 	}
@@ -108,7 +111,11 @@ public class Mod implements Serializable {
 	public boolean isInstallable() {
 		return this.installable;
 	}
+	public Date getLastDate() {
+		return this.lastDate;
+	}
 	
+	// Sets
 	public void setUniqueId(UUID uniqueId) {
 		this.uniqueId = uniqueId;
 	}
@@ -139,6 +146,9 @@ public class Mod implements Serializable {
 	}
 	public void setInstallable(boolean installable) {
 		this.installable = installable;
+	}
+	public void setLastDate(Date date) {
+		this.lastDate = date;
 	}
 	
 	
