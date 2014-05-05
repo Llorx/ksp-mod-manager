@@ -106,7 +106,7 @@ public class Http {
 						}
 					}
 				} else if (link.indexOf("dropbox.com/") > -1) {
-					Element d = doc.select("id[default_content_download_button]").first();
+					Element d = doc.select("a[id=default_content_download_button]").first();
 					if (d != null) {
 						String dlink = d.attr("href");
 						if (!dlink.equals("")) {

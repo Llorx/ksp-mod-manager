@@ -360,7 +360,7 @@ public class ModDataParser {
 			}
 			return downloadLink;
 		} catch (Exception e) {
-			e.printStackTrace();
+			ErrorLog.log(e);
 		}
 		return "";
 	}

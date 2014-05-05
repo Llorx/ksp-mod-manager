@@ -20,17 +20,30 @@ import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+
+import java.lang.ProcessBuilder;
+
+import java.util.ArrayList;
+
 public class ManagerConfig implements Serializable {
 	public String kspDataFolder = "";
 	public String moduleManagerLink = "http://forum.kerbalspaceprogram.com/threads/55219";
-	public String defaultModuleManagerLink = "http://forum.kerbalspaceprogram.com/threads/55219";
+	public transient String defaultModuleManagerLink = "http://forum.kerbalspaceprogram.com/threads/55219";
 	public boolean excludeUnneededFiles = true;
 	public boolean excludeModuleManagerDll = true;
 	
 	private transient JCheckBox excludeFilesCheck;
 	private transient JCheckBox excludeMmCheck;
 	
-	private JPanel getPanel(Main main) {
+	public transient Main main;
+	
+	public ManagerConfig(Main main) {
+		this.main = main;
+	}
+	
+	private JPanel getPanel() {
 		JPanel panel = new JPanel();
 		panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
 		
@@ -45,7 +58,7 @@ public class ManagerConfig implements Serializable {
 		changeKspDataBut.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				selectKspFolder(main);
+				selectKspFolder();
 			}
 		});
 		changeKspDataBut.setMaximumSize(new Dimension(300, 30));
@@ -111,7 +124,7 @@ public class ManagerConfig implements Serializable {
 		return panel;
 	}
 	
-	private boolean askForKspFolder(Main main) {
+	private boolean askForKspFolder() {
 		try {
 			JFileChooser j = new JFileChooser();
 			j.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
@@ -127,17 +140,17 @@ public class ManagerConfig implements Serializable {
 				}
 			}
 		} catch (Exception ex) {
-			ex.printStackTrace();
+			ErrorLog.log(ex);
 		}
 		return false;
 	}
 	
-	public boolean selectKspFolder(Main main) {
+	public boolean selectKspFolder() {
 		boolean ok = false;
 		do {
 			int reply = JOptionPane.showConfirmDialog(null, "Please, select your KSP main installation folder.", "KSP main folder", JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE);
 			if (reply == JOptionPane.OK_OPTION) {
-				ok = askForKspFolder(main);
+				ok = askForKspFolder();
 			} else {
 				return false;
 			}
@@ -145,9 +158,70 @@ public class ManagerConfig implements Serializable {
 		return true;
 	}
 	
-	public void change(Main main) {
-		JOptionPane.showMessageDialog(null, getPanel(main), "Config", JOptionPane.PLAIN_MESSAGE);
+	public void change() {
+		JOptionPane.showMessageDialog(null, getPanel(), "Config", JOptionPane.PLAIN_MESSAGE);
 		this.excludeUnneededFiles = excludeFilesCheck.isSelected();
 		this.excludeModuleManagerDll = excludeMmCheck.isSelected();
+	}
+	
+	public void checkVersion() {
+		boolean updateFound = false;
+		String LMMversion = "v0.1alpha";
+		try {
+			Document doc = Http.get("http://forum.kerbalspaceprogram.com/threads/78861").parse();
+			Element title = doc.select("span[class=threadtitle]").first();
+			if (title != null) {
+				String v = title.text();
+				int index = v.lastIndexOf("-");
+				if (index > -1) {
+					v = v.substring(index+1).trim();
+					if (!LMMversion.equals(v)) {
+						int reply = JOptionPane.showConfirmDialog(null, "New update found. Install it now?", "New update", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+						if (reply == JOptionPane.YES_OPTION) {
+							JOptionPane.showMessageDialog(null, "Updating... do not touch anything", "Updating", JOptionPane.PLAIN_MESSAGE);
+							updateFound = true;
+							Element posts = doc.select("ol[id=posts]").first();
+							if (posts != null) {
+								Element post = posts.select("li[id^=post_]").first();
+								if (post != null) {
+									Element linkEl = post.select("a[href*=.zip]").first();
+									if (linkEl != null) {
+										String link = linkEl.attr("href");
+										if (link.length() > 0) {
+											String filename = main.downloadFile(link, null);
+											if (filename != null) {
+												File f = new File("temp" + File.separator + filename);
+												boolean error = false;
+												try {
+													Zip.extract("temp" + File.separator + filename, "temp" + File.separator + "LMMupdate");
+												} catch (Exception e) {
+													ErrorLog.log(e);
+													error = true;
+												}
+												if (error == false) {
+													
+													final String javaBin = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";
+													
+													final ProcessBuilder builder = new ProcessBuilder(javaBin, "-jar", "temp" + File.separator + "LMMupdate" + File.separator + "LlorxKspModManager.jar", "-u");
+													builder.start();
+													
+													System.exit(0);
+													
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		} catch (Exception e) {
+			ErrorLog.log(e);
+		}
+		if (updateFound == true) {
+			JOptionPane.showMessageDialog(null, "Error updating. Download LMM manually.", "Error", JOptionPane.PLAIN_MESSAGE);
+		}
 	}
 }

@@ -59,6 +59,8 @@ import java.net.CookiePolicy;
 import javax.swing.JPopupMenu;
 import javax.swing.JMenuItem;
 
+import java.lang.ProcessBuilder;
+
 class MyTableModel extends AbstractTableModel {
 	
 	private List<Mod> mods;
@@ -177,7 +179,7 @@ public class Main extends JFrame implements ActionListener {
 	
 	Object lock = new Object();
 	
-	ManagerConfig config = new ManagerConfig();
+	ManagerConfig config = new ManagerConfig(this);
 	
 	boolean closingApp = false;
 	
@@ -528,7 +530,7 @@ public class Main extends JFrame implements ActionListener {
 					nextDownload();
 				}
 			} catch (Exception e) {
-				e.printStackTrace();
+				ErrorLog.log(e);
 			}
 		}
 	}
@@ -537,8 +539,6 @@ public class Main extends JFrame implements ActionListener {
 		if (mod.isInstallable() == false) {
 			return true;
 		}
-		InputStream in = null;
-		FileOutputStream fout = null;
 		try {
 			synchronized(lock) {
 				File f = new File("temp");
@@ -550,9 +550,6 @@ public class Main extends JFrame implements ActionListener {
 				}
 			}
 			
-			String filename = "";
-			int fsize = 0;
-			
 			if (mod.getDownloadLink().equals("")) {
 				String link = ModDataParser.getDownloadLink(mod);
 				if (link.equals("")) {
@@ -562,33 +559,54 @@ public class Main extends JFrame implements ActionListener {
 					mod.setDownloadLink(link);
 				}
 			}
-			
-			if (Http.fileType(mod.getDownloadLink()) != Http.ZIP_EXTENSION) {
-				String dlink = Http.getDownloadLink(mod.getDownloadLink());
+			String filename = downloadFile(mod.getDownloadLink(), mod);
+			if (filename.length() == 0) {
+				return downloadMod(mod);
+			} else if (filename == null) {
+				return false;
+			}
+			mod.downloadedFile = "temp" + File.separator + filename;
+			return true;
+		} catch (Exception ex) {
+			ErrorLog.log(ex);
+		}
+		return false;
+	}
+	
+	String downloadFile(String link, Mod mod) {
+		InputStream in = null;
+		FileOutputStream fout = null;
+		try {
+			if (mod != null) {
+				mod.setDownloadLink("");
+			}
+			if (Http.fileType(link) != Http.ZIP_EXTENSION) {
+				String dlink = Http.getDownloadLink(link);
 				if (dlink == null) {
 					Browser browser = new Browser();
-					browser.show(mod.getDownloadLink(), mod);
+					browser.show(link, mod);
 					if (!browser.downloadFile.equals("")) {
 						dlink = browser.downloadFile;
 					}
 					if (browser.modReloaded == true) {
-						return downloadMod(mod);
+						return "";
 					}
 				}
-				if (dlink != null && Http.fileType(dlink) ==  Http.ZIP_EXTENSION) {
-					mod.setDownloadLink(dlink);
+				if (dlink != null && Http.fileType(dlink) == Http.ZIP_EXTENSION) {
+					link = dlink;
 				} else {
-					alertBox(null, mod.getName() + ": Error getting download link.");
-					return false;
+					alertBox(null, (mod!=null?mod.getName():link) + ": Error getting download link.");
+					return null;
 				}
 			}
+			HttpURLConnection conn = Http.getConnection(link);
 			
-			HttpURLConnection conn = Http.getConnection(mod.getDownloadLink());
-			mod.setDownloadLink("");
 			if (conn == null) {
-				alertBox(null, mod.getName() + ": Error getting download link.");
-				return false;
+				alertBox(null, (mod!=null?mod.getName():link) + ": Error getting download link.");
+				return null;
 			}
+			
+			String filename;
 			
 			String header = conn.getHeaderField("Content-Disposition");
 			if(header != null && header.indexOf("=") != -1) {
@@ -596,13 +614,17 @@ public class Main extends JFrame implements ActionListener {
 			} else {
 				filename = "default.zip";
 			}
-			fsize = conn.getContentLength();
+			int fsize = conn.getContentLength();
 			
 			filename = filename.replace("\\", "_");
 			filename = filename.replace("/", "_");
 			filename = filename.replace("\"", "");
 			
 			in = conn.getInputStream();
+			try {
+				new File("temp").mkdir();
+			} catch (Exception ee) {
+			}
 			fout = new FileOutputStream("temp" + File.separator + filename);
 			
 			final byte data[] = new byte[512];
@@ -614,31 +636,34 @@ public class Main extends JFrame implements ActionListener {
 				int perc = (int)((total*100.0f)/fsize);
 				if (lastPerc != perc) {
 					lastPerc = perc;
-					mod.setStatus(" - [Downloading - "+lastPerc+"%] -");
-					setMod(mod);
+					if (mod != null) {
+						mod.setStatus(" - [Downloading - "+lastPerc+"%] -");
+						setMod(mod);
+					}
 				}
 				fout.write(data, 0, count);
 			}
-			mod.downloadedFile = "temp" + File.separator + filename;
-		} catch (Exception ex) {
-			ex.printStackTrace();
+			
+			return filename;
+		} catch (Exception e) {
+			ErrorLog.log(e);
 		} finally {
 			try {
 				if (in != null) {
 					in.close();
 				}
 			} catch (Exception ex) {
-				ex.printStackTrace();
+				ErrorLog.log(ex);
 			}
 			try {
 				if (fout != null) {
 					fout.close();
 				}
 			} catch (Exception ex) {
-				ex.printStackTrace();
+				ErrorLog.log(ex);
 			}
 		}
-		return true;
+		return null;
 	}
 	
 	public class MyAsyncModInstall implements Runnable {
@@ -722,7 +747,7 @@ public class Main extends JFrame implements ActionListener {
 							try {
 								Desktop.getDesktop().edit(file);
 							} catch(Exception ex) {
-								ex.printStackTrace();
+								ErrorLog.log(ex);
 							}
 						} else {
 							JPanel readmePanel = new JPanel();
@@ -737,7 +762,7 @@ public class Main extends JFrame implements ActionListener {
 										try {
 											Desktop.getDesktop().edit(file);
 										} catch(Exception ex) {
-											ex.printStackTrace();
+											ErrorLog.log(ex);
 										}
 									}
 								});
@@ -854,7 +879,7 @@ public class Main extends JFrame implements ActionListener {
 			try {
 				Zip.extract(this.mod.downloadedFile, modExtract);
 			} catch (Exception e) {
-				e.printStackTrace();
+				ErrorLog.log(e);
 			}
 			int i = 0;
 			this.mod.setStatus(" - [Installing...] -");
@@ -1190,7 +1215,7 @@ public class Main extends JFrame implements ActionListener {
 			out.close();
 			
 		} catch (Exception ex) {
-			ex.printStackTrace();
+			ErrorLog.log(ex);
 		}
 	}
 	
@@ -1226,7 +1251,9 @@ public class Main extends JFrame implements ActionListener {
 					FileInputStream f_in = new FileInputStream("data" + File.separator + "ManagerConfig.object");
 					ObjectInputStream obj_in = new ObjectInputStream (f_in);
 					config = (ManagerConfig)obj_in.readObject();
+					config.main = this;
 				} catch (Exception ex) {
+					ErrorLog.log(ex);
 				}
 				
 				nodes = doc.getElementsByTagName("config");
@@ -1244,18 +1271,22 @@ public class Main extends JFrame implements ActionListener {
 				}
 			}
 		} catch (Exception ex) {
-			ex.printStackTrace();
+			ErrorLog.log(ex);
 		}
 		File f = new File(config.kspDataFolder);
 		if (config.kspDataFolder.equals("") || !f.exists() || !f.isDirectory()) {
-			if (config.selectKspFolder(this) == false) {
+			if (config.selectKspFolder() == false) {
 				System.exit(0);
+			} else {
+				saveConfigFile();
 			}
 		}
+		
+		config.checkVersion();
 	}
 	
 	void openConfigWindow() {
-		config.change(this);
+		config.change();
 		saveConfigFile();
 	}
 	
@@ -1328,19 +1359,55 @@ public class Main extends JFrame implements ActionListener {
 	}
 	
 	public static void main(String[] ar) {
-		CookieHandler.setDefault( new CookieManager( null, CookiePolicy.ACCEPT_ALL ) );
-		if ((new File("temp")).exists()) {
-			DirIO.clearDir("temp");
+		if ((new File("errors.txt")).exists()) {
+			DirIO.clearDir("errors.txt");
 		}
-		Main window=new Main();
-		window.setSize(500,500);
-		window.setResizable(false);
-		window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		window.setVisible(true);
+		if (ar.length > 0 && ar[0].equals("-u")) {
+			try {
+				int erros = 0;
+				while (true) {
+					try {
+						Files.copy(Paths.get("temp" + File.separator + "LMMupdate" + File.separator + "LlorxKspModManager.jar"), Paths.get("LlorxKspModManager.jar"), StandardCopyOption.REPLACE_EXISTING);
+						break;
+					} catch (Exception e) {
+						erros++;
+						if (erros > 20) {
+							JOptionPane.showMessageDialog(null, "Error updating. Download LMM manually.", "Error", JOptionPane.PLAIN_MESSAGE);
+							System.exit(0);
+						}
+						Thread.sleep(500);
+					}
+				}
+				
+				
+				final String javaBin = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";
+				
+				final ProcessBuilder builder = new ProcessBuilder(javaBin, "-jar", "LlorxKspModManager.jar", "-u2");
+				builder.start();
+				
+				System.exit(0);
+			} catch (Exception e) {
+				ErrorLog.log(e);
+			}
+			System.exit(0);
+		} else {
+			if (ar.length > 0 && ar[0].equals("-u2")) {
+				JOptionPane.showMessageDialog(null, "Update done.", "Done!", JOptionPane.PLAIN_MESSAGE);
+			}
+			CookieHandler.setDefault( new CookieManager( null, CookiePolicy.ACCEPT_ALL ) );
+			if ((new File("temp")).exists()) {
+				DirIO.clearDir("temp");
+			}
+			Main window=new Main();
+			window.setSize(500,500);
+			window.setResizable(false);
+			window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+			window.setVisible(true);
 
-		window.setLocationRelativeTo(null);
-		
-		window.loadConfigFile();
+			window.setLocationRelativeTo(null);
+			
+			window.loadConfigFile();
+		}
 	}
 }
 
@@ -1385,7 +1452,7 @@ class Zip {
 			zis.closeEntry();
 			zis.close();
 		} catch(Exception ex) {
-			ex.printStackTrace();
+			ErrorLog.log(ex);
 		}
 	}
 	
@@ -1450,7 +1517,7 @@ class Zip {
 			zis.closeEntry();
 			zis.close();
 		} catch(Exception ex) {
-			ex.printStackTrace();
+			ErrorLog.log(ex);
 		}
 		return type;
 	}
@@ -1458,11 +1525,11 @@ class Zip {
 
 class DirIO {
 	public static void clearDir(String folder) {
-		boolean copied;
+		boolean cleared;
 		long t = System.currentTimeMillis();
 		do {
-			copied = cDir(folder);
-		} while(copied == false && System.currentTimeMillis()-t < 5000);
+			cleared = cDir(folder);
+		} while(cleared == false && System.currentTimeMillis()-t < 5000);
 	}
 
 	private static boolean cDir(String folder) {
