@@ -239,6 +239,7 @@ public class Mod implements Serializable {
 	}
 	public Mod(String name, String link, boolean installable) {
 		this.reloadMod(name, link, installable);
+		this.setLastDate(new Date());
 	}
 };
 

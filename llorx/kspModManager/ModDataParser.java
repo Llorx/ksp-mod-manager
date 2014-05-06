@@ -301,12 +301,12 @@ public class ModDataParser {
 					if (posts != null) {
 						Element post = posts.select("li[id^=post_]").first();
 						if (post != null) {
-							links = post.select("a[href*=.zip]");
+							links = post.select("a[href*=.zip],a[href*=mediafire.com/]");
 						}
 					}
 					break;
 				default:
-					links = doc.select("a[href*=.zip]");
+					links = doc.select("a[href*=.zip],a[href*=mediafire.com/]");
 					break;
 			}
 			JPanel panel = new JPanel();
@@ -333,7 +333,7 @@ public class ModDataParser {
 			Browser browser = new Browser();
 			if (links != null && links.size() > 0) {
 				for (int i = 0; i < links.size(); i++) {
-					JRadioButton b = new JRadioButton(links.get(i).attr("href"));
+					JRadioButton b = new JRadioButton(links.get(i).text() + " - " + links.get(i).attr("href"));
 					b.setActionCommand(links.get(i).attr("href"));
 					panel.add(b);
 					group.add(b);

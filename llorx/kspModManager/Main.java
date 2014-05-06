@@ -149,7 +149,7 @@ class IconTextCellRenderer extends DefaultTableCellRenderer {
 						setFont(font.deriveFont(font.getStyle() & ~Font.BOLD));
 					}
 					if (mod.getLastDate() != null) {
-						setText((mod.justUpdated == true?"[New version"+(mod.isInstallable()?" installed":"")+"] ":"") + this.sdfDate.format(mod.getLastDate()));
+						setText((mod.justUpdated == true?"[New "+(mod.isInstallable()?" version installed":"update available")+"] ":"") + this.sdfDate.format(mod.getLastDate()));
 					}
 				}
 				break;
@@ -985,6 +985,7 @@ public class Main extends JFrame implements ActionListener {
 					if (newVersion || force == true) {
 						if (newVersion) {
 							mod.justUpdated = true;
+							mod.setLastDate(new Date());
 						}
 						updated++;
 						if (mod.isInstallable()) {
@@ -1257,7 +1258,7 @@ public class Main extends JFrame implements ActionListener {
 			rootElement.appendChild(configElement);
 			
 			Element configVersionElement = xmlDoc.createElement("configVersion");
-			configVersionElement.appendChild(xmlDoc.createTextNode("4"));
+			configVersionElement.appendChild(xmlDoc.createTextNode("6"));
 			configElement.appendChild(configVersionElement);
 			
 			TransformerFactory transformerFactory = TransformerFactory.newInstance();
@@ -1323,10 +1324,10 @@ public class Main extends JFrame implements ActionListener {
 						Element element = (Element) node;
 						
 						int configVersion = Integer.parseInt(getNodeValue("configVersion", element));
-						if (configVersion == 4) {
+						if (configVersion == 6) {
 							// Config is OK.
 						} else {
-							if (configVersion <= 3) {
+							if (configVersion <= 4) {
 								Mod mod;
 								int tryouts = 0;
 								do {
@@ -1343,6 +1344,11 @@ public class Main extends JFrame implements ActionListener {
 									if (m.getId().equals(mod.getId())) {
 										m.isMM = true;
 									}
+								}
+								saveConfigFile();
+							}
+							if (configVersion < 5) {
+								for(Mod m: modList) {
 									if (m.getLastDate() == null) {
 										m.setLastDate(new Date());
 									}
@@ -1483,7 +1489,7 @@ public class Main extends JFrame implements ActionListener {
 			System.exit(0);
 		} else {
 			if (ar.length > 0 && ar[0].equals("-u2")) {
-				JOptionPane.showMessageDialog(null, "Update done. Changelog:\n - Module Manager Manager fixes", "Done!", JOptionPane.PLAIN_MESSAGE);
+				JOptionPane.showMessageDialog(null, "Update done. Changelog:\n - Date column format fix", "Done!", JOptionPane.PLAIN_MESSAGE);
 			}
 			CookieHandler.setDefault( new CookieManager( null, CookiePolicy.ACCEPT_ALL ) );
 			if ((new File("temp")).exists()) {
