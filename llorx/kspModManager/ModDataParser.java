@@ -333,7 +333,11 @@ public class ModDataParser {
 			Browser browser = new Browser();
 			if (links != null && links.size() > 0) {
 				for (int i = 0; i < links.size(); i++) {
-					JRadioButton b = new JRadioButton(links.get(i).text() + " - " + links.get(i).attr("href"));
+					String txt = links.get(i).attr("href");
+					if (!links.get(i).text().startsWith("http:") && !links.get(i).text().startsWith("https:")) {
+						txt = links.get(i).text() + " - " + txt;
+					}
+					JRadioButton b = new JRadioButton(txt);
 					b.setActionCommand(links.get(i).attr("href"));
 					panel.add(b);
 					group.add(b);

@@ -80,29 +80,19 @@ class MyTableModel extends AbstractTableModel {
 	}
 	
 	@Override
-	public String getColumnName(int column) {
-		String name = "??";
-		switch (column) {
-			case 0:
-				name = "Mod name";
-				break;
-			case 1:
-				name = "Latest date";
-				break;
-		}
-		return name;
+	public boolean isCellEditable(int row, int column) {
+		return false;
 	}
 	
 	@Override
-	public Class<?> getColumnClass(int columnIndex) {
-		Class type = String.class;
-		switch (columnIndex) {
+	public String getColumnName(int column) {
+		switch (column) {
 			case 0:
+				return "Mod name";
 			case 1:
-				type = String.class;
-				break;
+				return "Latest date";
 		}
-		return type;
+		return "";
 	}
 	
 	@Override
@@ -365,7 +355,7 @@ public class Main extends JFrame implements ActionListener {
 						removeMod(mod);
 					} else {
 						mod.setInstallable(false);
-						listUpdate(false, mainList.getSelectedRow());
+						listUpdate(mainList.getSelectedRow());
 					}
 					saveConfigFile();
 				}
@@ -533,7 +523,7 @@ public class Main extends JFrame implements ActionListener {
 		for (int i = 0; i < modList.size(); i++) {
 			if (modList.get(i).getUniqueId() == mod.getUniqueId()) {
 				modList.remove(i);
-				listUpdate(true, -1);
+				listUpdate();
 				return true;
 			}
 		}
@@ -1181,32 +1171,25 @@ public class Main extends JFrame implements ActionListener {
 			}
 			if (found == true) {
 				if (mod.nameChanged) {
-					listUpdate(false, -1);
+					listUpdate();
 				} else {
-					listUpdate(false, tabley);
+					listUpdate(tabley);
 				}
 			} else {
 				modList.add(mod);
-				listUpdate(true, -1);
+				listUpdate();
 			}
 			mod.nameChanged = false;
 		}
 	}
 	
 	void listUpdate() {
-		listUpdate(true, -1);
+		listUpdate(-1);
 	}
 	
-	void listUpdate(boolean rowQuantityChange) {
-		listUpdate(rowQuantityChange, -1);
-	}
-	
-	void listUpdate(boolean rowQuantityChange, int row) {
+	void listUpdate(int row) {
 		synchronized(lock) {
-			if (rowQuantityChange) {
-				Collections.sort(modList, new myComparator());
-				((AbstractTableModel)mainList.getModel()).fireTableStructureChanged();
-			} else if (row > -1) {
+			if (row > -1) {
 				((AbstractTableModel)mainList.getModel()).fireTableRowsUpdated(row, row);
 			} else {
 				Collections.sort(modList, new myComparator());
@@ -1353,7 +1336,7 @@ public class Main extends JFrame implements ActionListener {
 										m.setLastDate(new Date());
 									}
 								}
-								listUpdate(true, -1);
+								listUpdate();
 								saveConfigFile();
 							}
 						}
@@ -1456,9 +1439,16 @@ public class Main extends JFrame implements ActionListener {
 	}
 	
 	public static void main(String[] ar) {
+		Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+			public void uncaughtException(Thread t, Throwable e) {
+				ErrorLog.log(e);
+			}
+		});
+		
 		if ((new File("errors.txt")).exists()) {
 			DirIO.clearDir("errors.txt");
 		}
+		
 		if (ar.length > 0 && ar[0].equals("-u")) {
 			try {
 				int erros = 0;
@@ -1489,7 +1479,7 @@ public class Main extends JFrame implements ActionListener {
 			System.exit(0);
 		} else {
 			if (ar.length > 0 && ar[0].equals("-u2")) {
-				JOptionPane.showMessageDialog(null, "Update done. Changelog:\n - Date column format fix", "Done!", JOptionPane.PLAIN_MESSAGE);
+				JOptionPane.showMessageDialog(null, "Update done. Changelog:\n - Minor errors fixed\n - No more lib folder needed.", "Done!", JOptionPane.PLAIN_MESSAGE);
 			}
 			CookieHandler.setDefault( new CookieManager( null, CookiePolicy.ACCEPT_ALL ) );
 			if ((new File("temp")).exists()) {
@@ -1566,7 +1556,7 @@ class Zip {
 					File pFile = file;
 					String parentData = "";
 					while ((pFile = pFile.getParentFile()) != null) {
-						if (pFile.getName().equals("GameData")) {
+						if (pFile.getName().toLowerCase().equals("gamedata")) {
 							parentData = pFile.getPath();
 						}
 					}
