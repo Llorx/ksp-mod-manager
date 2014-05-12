@@ -247,7 +247,7 @@ public class Main extends JFrame implements ActionListener {
 				int rowindex = mainList.getSelectedRow();
 				if (rowindex < 0)
 					return;
-				if (e.isPopupTrigger() && e.getComponent() instanceof JTable ) {
+				if (e.getComponent() instanceof JTable ) {
 					JPopupMenu popup = new MyPopMenu(getSelectedMod());
 					popup.show(e.getComponent(), e.getX(), e.getY());
 				}
@@ -1479,7 +1479,7 @@ public class Main extends JFrame implements ActionListener {
 			System.exit(0);
 		} else {
 			if (ar.length > 0 && ar[0].equals("-u2")) {
-				JOptionPane.showMessageDialog(null, "Update done. Changelog:\n - Minor errors fixed\n - No more lib folder needed.", "Done!", JOptionPane.PLAIN_MESSAGE);
+				JOptionPane.showMessageDialog(null, "Update done. Changelog:\n - Right click fix on Linux.", "Done!", JOptionPane.PLAIN_MESSAGE);
 			}
 			CookieHandler.setDefault( new CookieManager( null, CookiePolicy.ACCEPT_ALL ) );
 			if ((new File("temp")).exists()) {
