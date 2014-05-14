@@ -49,6 +49,9 @@ public class ModDataParser {
 			case Mod.TYPE_DROPBOX_FOLDER:
 				parseDropboxFolderData(mod, res);
 				break;
+			case Mod.TYPE_CURSE:
+				parseCurseData(mod, res);
+				break;
 			default:
 				parseDefaultData(mod);
 				break;
@@ -211,7 +214,10 @@ public class ModDataParser {
 				}
 				if (id.length() > 0) {
 					mod.setId(id);
-					el = doc.select("local-time").first();
+					el = doc.select("time").first();
+					if (el == null) {
+						el = doc.select("local-time").first();
+					}
 					if (el != null) {
 						String version = el.attr("datetime");
 						mod.setVersion(version);
@@ -269,6 +275,56 @@ public class ModDataParser {
 												}
 											}
 										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		} catch (Exception e) {
+		}
+	}
+	private static void parseCurseData(Mod mod, Response res) {
+		try {
+			res = Http.get(mod.getLink());
+			Document doc = res.parse();
+			
+			
+			int index = mod.getLink().indexOf("/plugins/");
+			if (index > -1) {
+				String id = "";
+				index = index + 9;
+				int index2 = mod.getLink().indexOf("-" , index);
+				int index3 = mod.getLink().indexOf("/" , index);
+				if (index3 < index2) {
+					index2 = index3;
+				}
+				if (index2 > -1) {
+					id = mod.getLink().substring(index,index2);
+				} else {
+					if (index3 > -1) {
+						index2 = index3;
+						id = mod.getLink().substring(index,index2);
+					} else {
+						id = mod.getLink().substring(index);
+					}
+				}
+				if (id.length() > 0) {
+					mod.setId(id);
+					Element el = doc.select("ul[class=cf-recentfiles]").first();
+					if (el != null) {
+						Element linkEl = el.select("a[href*=download]").first();
+						if (linkEl != null) {
+							String link = linkEl.attr("abs:href");
+							if (link.length() > 0) {
+								mod.setDownloadLink(link);
+								el = el.select("abbr").first();
+								if (el != null) {
+									String version = el.attr("data-epoch");
+									if (version.length() > 0) {
+										mod.setVersion(version);
+										mod.isValid = true;
 									}
 								}
 							}

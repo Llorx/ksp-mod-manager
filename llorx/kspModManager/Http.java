@@ -33,7 +33,7 @@ public class Http {
 		if (conn != null) {
 			String type = conn.getHeaderField("Content-Type");
 			if (type.indexOf("application/") > -1) {
-				if (type.indexOf("application/zip") > -1) {
+				if (type.indexOf("application/zip") > -1 || type.indexOf("application/x-zip-compressed") > -1) {
 					return Http.ZIP_EXTENSION;
 				} else {
 					String header = conn.getHeaderField("Content-Disposition");
@@ -42,12 +42,23 @@ public class Http {
 						filename = filename.replace("\\", "_");
 						filename = filename.replace("/", "_");
 						filename = filename.replace("\"", "");
-						if (filename.lastIndexOf(".") > -1 && filename.substring(filename.lastIndexOf(".")+1).equals("zip")) {
+						if (filename.lastIndexOf(".") > -1 && filename.substring(filename.lastIndexOf(".")).toLowerCase().equals(".zip")) {
 							return Http.ZIP_EXTENSION;
 						} else {
 							return Http.OTHER_EXTENSION;
 						}
 					} else {
+						int index = link.lastIndexOf(".");
+						if (index > -1) {
+							String ex = link.substring(index);
+							index = ex.lastIndexOf("?");
+							if (index > -1) {
+								ex = link.substring(0, index);
+							}
+							if (ex.toLowerCase().equals(".zip")) {
+								return Http.ZIP_EXTENSION;
+							}
+						}
 						return Http.OTHER_EXTENSION;
 					}
 				}
