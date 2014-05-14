@@ -105,7 +105,7 @@ class IconTextCellRenderer extends DefaultTableCellRenderer {
 	
 	ImageIcon install = new ImageIcon(getClass().getResource("/images/install.png"));
 	ImageIcon online = new ImageIcon(getClass().getResource("/images/link.gif"));
-	SimpleDateFormat sdfDate = new SimpleDateFormat("d MMM yyyy - kk:mm:ss");
+	SimpleDateFormat sdfDate = new SimpleDateFormat("dd MMM yyyy - kk:mm:ss");
 	
 	@Override
 	public Component getTableCellRendererComponent(JTable table,
@@ -139,7 +139,7 @@ class IconTextCellRenderer extends DefaultTableCellRenderer {
 						setFont(font.deriveFont(font.getStyle() & ~Font.BOLD));
 					}
 					if (mod.getLastDate() != null) {
-						setText((mod.justUpdated == true?"[New "+(mod.isInstallable()?" version installed":"update available")+"] ":"") + this.sdfDate.format(mod.getLastDate()));
+						setText((mod.justUpdated == true?"[New "+(mod.isInstallable()?" version installed":"update available")+"] ":"") + this.sdfDate.format(mod.getLastDate()) + " | " + mod.getPrefix());
 					}
 				}
 				break;
@@ -322,16 +322,23 @@ public class Main extends JFrame implements ActionListener {
 				if (!mod.getLink().equals(oldLink)) {
 					int reply = JOptionPane.showConfirmDialog(null, "Mod link has changed. Do you want to download it from the new link?", "Link changed", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
 					if (reply == JOptionPane.YES_OPTION) {
-						reinstallSelectedMod();
+						reinstallSelectedMod(mod);
 					}
 				}
+				saveConfigFile();
 			}
 		}
 	}
 	
 	void reinstallSelectedMod() {
+		reinstallSelectedMod(null);
+	}
+	
+	void reinstallSelectedMod(Mod mod) {
 		synchronized(lock) {
-			Mod mod = getSelectedMod();
+			if (mod == null) {
+				mod = getSelectedMod();
+			}
 			if (mod != null && mod.getStatus().equals("")) {
 				mod.setInstallable(true);
 				List<Mod> list = new ArrayList<Mod>();
@@ -996,6 +1003,7 @@ public class Main extends JFrame implements ActionListener {
 								removeMod(mod);
 							}
 						} else {
+							mod.setStatus("");
 							setMod(mod);
 						}
 					} else {
@@ -1494,7 +1502,7 @@ public class Main extends JFrame implements ActionListener {
 			System.exit(0);
 		} else {
 			if (ar.length > 0 && ar[0].equals("-u2")) {
-				JOptionPane.showMessageDialog(null, "Update done. Changelog:\n - Curse support added (fixed).\n - GitHub HTML change added.", "Done!", JOptionPane.PLAIN_MESSAGE);
+				JOptionPane.showMessageDialog(null, "Update done. Changelog:\n - Curse support added (fixed).\n - GitHub HTML change added.\n - Prefixes added", "Done!", JOptionPane.PLAIN_MESSAGE);
 			}
 			CookieHandler.setDefault( new CookieManager( null, CookiePolicy.ACCEPT_ALL ) );
 			if ((new File("temp")).exists()) {

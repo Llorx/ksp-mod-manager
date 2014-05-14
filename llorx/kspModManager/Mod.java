@@ -55,32 +55,35 @@ public class Mod implements Serializable {
 	public UUID getUniqueId() {
 		return uniqueId;
 	}
-	public String getId() {
+	public String getPrefix() {
 		String prefix = "";
 		switch(this.getType()) {
 			case Mod.TYPE_SPACEPORT:
-				prefix = "sp_";
+				prefix = "SpacePort";
 				break;
 			case Mod.TYPE_KSPFORUM:
-				prefix = "kf_";
+				prefix = "KspForum";
 				break;
 			case Mod.TYPE_JENKINS:
-				prefix = "jk_";
+				prefix = "Jenkins";
 				break;
 			case Mod.TYPE_GITHUB:
-				prefix = "gh";
+				prefix = "GitHub";
 				break;
 			case Mod.TYPE_BITBUCKET:
-				prefix = "bb_";
+				prefix = "BitBucket";
 				break;
 			case Mod.TYPE_DROPBOX_FOLDER:
-				prefix = "db_";
+				prefix = "Dropbox";
 				break;
 			case Mod.TYPE_CURSE:
-				prefix = "cf_";
+				prefix = "CurseForge";
 				break;
 		}
-		return prefix + this.id;
+		return prefix;
+	}
+	public String getId() {
+		return this.getPrefix() + "_" + this.id;
 	}
 	public String getUnprefixedId() {
 		return this.id;
