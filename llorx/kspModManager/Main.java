@@ -1481,7 +1481,7 @@ public class Main extends JFrame implements ActionListener {
 			System.exit(0);
 		} else {
 			if (ar.length > 0 && ar[0].equals("-u2")) {
-				JOptionPane.showMessageDialog(null, "Update done. Changelog:\n - Curse support added.\n - GitHub HTML change added.", "Done!", JOptionPane.PLAIN_MESSAGE);
+				JOptionPane.showMessageDialog(null, "Update done. Changelog:\n - Curse support added (fixed).\n - GitHub HTML change added.", "Done!", JOptionPane.PLAIN_MESSAGE);
 			}
 			CookieHandler.setDefault( new CookieManager( null, CookiePolicy.ACCEPT_ALL ) );
 			if ((new File("temp")).exists()) {

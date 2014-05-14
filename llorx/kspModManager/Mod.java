@@ -209,7 +209,7 @@ public class Mod implements Serializable {
 					this.setType(Mod.TYPE_BITBUCKET);
 				} else if (link.indexOf("dropbox.com/") > -1) {
 					this.setType(Mod.TYPE_DROPBOX_FOLDER);
-				} else if (link.indexOf("kerbal.curseforge.com/plugins/") > -1) {
+				} else if (link.indexOf("kerbal.curseforge.com/") > -1) {
 					this.setType(Mod.TYPE_CURSE);
 				} else {
 					if (Http.fileType(link) == Http.HTML) {

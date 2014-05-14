@@ -34,6 +34,8 @@ import org.jsoup.Connection.Response;
 
 import javax.swing.JOptionPane;
 
+import java.util.regex.*;
+
 public class Browser {
 	WebEngine webEngine;
 	Worker webWorker;
@@ -153,7 +155,33 @@ public class Browser {
 					dots = 0;
 					try {
 						int fileType = Http.fileType(lastClick);
-						if (fileType != Http.HTML) {
+						if (mod != null) {
+							if (lastClick.indexOf("kerbal.curseforge.com/") > -1) {
+								String link = lastClick;
+								Pattern pattern = Pattern.compile("(.*)(kerbal.curseforge.com\\/)([^\\/]*)(\\/)(\\d*)([^\\/]*)");
+								Matcher matcher = pattern.matcher(link);
+								if (matcher.find()) {
+									link = matcher.group(0);
+									int reply = JOptionPane.showConfirmDialog(null, "Detected a Curse link\nDo you want to check version updates directly from there in the future?", "Detected Curse link", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+									if (reply == JOptionPane.YES_OPTION) {
+										modReloaded = true;
+										mod.reloadMod(link);
+										Platform.runLater(new Runnable() {
+											@Override
+											public void run() {
+												webWorker.cancel();
+												SwingUtilities.invokeLater(new Runnable(){
+													@Override public void run() {
+														dialog.dispose();
+													}
+												});
+											}
+										});
+									}
+								}
+							}
+						}
+						if (modReloaded == false && fileType != Http.HTML) {
 							if (fileType == Http.ZIP_EXTENSION) {
 								int reply = JOptionPane.showConfirmDialog(null, "Selected:\n" + lastClick + "\nAre you sure?", "Sure?", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
 								if (reply == JOptionPane.YES_OPTION) {
@@ -172,27 +200,6 @@ public class Browser {
 								}
 							} else {
 								JOptionPane.showMessageDialog(null, "This file is not a zip file. Not supported by Mod Manager right now. Select another one.", "File not supported", JOptionPane.PLAIN_MESSAGE);
-							}
-						} else {
-							if (mod != null) {
-								if (lastClick.indexOf("kerbalspaceport.com/") > -1) {
-									int reply = JOptionPane.showConfirmDialog(null, "Detected a Spaceport link\nDo you want to check version updates directly from there in the future?", "Detected Spaceport link", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
-									if (reply == JOptionPane.YES_OPTION) {
-										modReloaded = true;
-										mod.reloadMod(lastClick);
-										Platform.runLater(new Runnable() {
-											@Override
-											public void run() {
-												webWorker.cancel();
-												SwingUtilities.invokeLater(new Runnable(){
-													@Override public void run() {
-														dialog.dispose();
-													}
-												});
-											}
-										});
-									}
-								}
 							}
 						}
 					} catch (Exception e) {
