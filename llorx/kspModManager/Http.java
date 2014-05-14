@@ -72,21 +72,19 @@ public class Http {
 	public static HttpURLConnection getConnection(String link) {
 		int tryouts = 0;
 		while(tryouts < 10) {
+			link = link.replace("\\", "/");
+			link = link.replace(" ", "%20");
 			tryouts++;
 			try {
 				URL website = new URL(link);
 				HttpURLConnection conn = (HttpURLConnection)website.openConnection();
-				conn.addRequestProperty("User-Agent", "LlorxKspModManager");
-				int status = conn.getResponseCode();
-				boolean redirect = false;
-				if (status != HttpURLConnection.HTTP_OK) {
-					if (status == HttpURLConnection.HTTP_MOVED_TEMP
-						|| status == HttpURLConnection.HTTP_MOVED_PERM
-							|| status == HttpURLConnection.HTTP_SEE_OTHER)
-					redirect = true;
-				}
-				if (redirect) {
-					String newUrl = conn.getHeaderField("Location");
+				conn.setInstanceFollowRedirects(false);
+				conn.setRequestProperty("User-Agent", "LlorxKspModManager");
+				String newUrl = conn.getHeaderField("Location");
+				if (newUrl != null && newUrl.length() > 0) {
+					if (newUrl.startsWith("//")) {
+						newUrl = link.substring(0, link.indexOf("//")) + newUrl;
+					}
 					return getConnection(newUrl);
 				} else {
 					return conn;

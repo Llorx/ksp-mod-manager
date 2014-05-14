@@ -300,7 +300,7 @@ public class ModDataParser {
 					index = index + 1;
 					int index2 = mod.getLink().indexOf("-" , index);
 					int index3 = mod.getLink().indexOf("/" , index);
-					if (index3 < index2) {
+					if (index3 > -1 && index3 < index2) {
 						index2 = index3;
 					}
 					if (index2 > -1) {
