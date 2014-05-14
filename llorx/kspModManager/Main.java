@@ -1243,7 +1243,7 @@ public class Main extends JFrame implements ActionListener {
 			rootElement.appendChild(configElement);
 			
 			Element configVersionElement = xmlDoc.createElement("configVersion");
-			configVersionElement.appendChild(xmlDoc.createTextNode("6"));
+			configVersionElement.appendChild(xmlDoc.createTextNode("7"));
 			configElement.appendChild(configVersionElement);
 			
 			TransformerFactory transformerFactory = TransformerFactory.newInstance();
@@ -1309,7 +1309,7 @@ public class Main extends JFrame implements ActionListener {
 						Element element = (Element) node;
 						
 						int configVersion = Integer.parseInt(getNodeValue("configVersion", element));
-						if (configVersion == 6) {
+						if (configVersion == 7) {
 							// Config is OK.
 						} else {
 							if (configVersion <= 4) {
@@ -1339,6 +1339,19 @@ public class Main extends JFrame implements ActionListener {
 									}
 								}
 								listUpdate();
+								saveConfigFile();
+							}
+							if (configVersion == 6) {
+								for(Mod m: modList) {
+									if (m.getType() == Mod.TYPE_CURSE) {
+										String id = m.getUnprefixedId();
+										int index = id.indexOf("-");
+										if (index > -1) {
+											id = id.substring(index);
+											m.setId(id);
+										}
+									}
+								}
 								saveConfigFile();
 							}
 						}

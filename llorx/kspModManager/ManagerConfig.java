@@ -166,7 +166,7 @@ public class ManagerConfig implements Serializable {
 	
 	public void checkVersion() {
 		boolean updateFound = false;
-		String LMMversion = "v0.1.7.2alpha";
+		String LMMversion = "v0.1.7.3alpha";
 		try {
 			Document doc = Http.get("http://forum.kerbalspaceprogram.com/threads/78861").parse();
 			Element title = doc.select("span[class=threadtitle]").first();
