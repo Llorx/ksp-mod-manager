@@ -25,7 +25,8 @@ public class Mod implements Serializable {
 	public static final int TYPE_GITHUB = 3;
 	public static final int TYPE_BITBUCKET = 4;
 	public static final int TYPE_DROPBOX_FOLDER = 5;
-	public static final int TYPE_CURSE = 6;
+	public static final int TYPE_CURSEFORGE = 6;
+	public static final int TYPE_CURSE = 7;
 	public static final int TYPE_LINK = 1000;
 	
 	
@@ -76,8 +77,11 @@ public class Mod implements Serializable {
 			case Mod.TYPE_DROPBOX_FOLDER:
 				prefix = "Dropbox";
 				break;
-			case Mod.TYPE_CURSE:
+			case Mod.TYPE_CURSEFORGE:
 				prefix = "CurseForge";
+				break;
+			case Mod.TYPE_CURSE:
+				prefix = "Curse.com";
 				break;
 		}
 		return prefix;
@@ -213,6 +217,8 @@ public class Mod implements Serializable {
 				} else if (link.indexOf("dropbox.com/") > -1) {
 					this.setType(Mod.TYPE_DROPBOX_FOLDER);
 				} else if (link.indexOf("kerbal.curseforge.com/") > -1) {
+					this.setType(Mod.TYPE_CURSEFORGE);
+				} else if (link.indexOf("curse.com/") > -1) {
 					this.setType(Mod.TYPE_CURSE);
 				} else {
 					if (Http.fileType(link) == Http.HTML) {

@@ -11,7 +11,6 @@ import java.awt.Component;
 import java.awt.Color;
 import java.awt.event.*;
 import java.awt.Font;
-import java.awt.Desktop;
 import java.awt.FlowLayout;
 import java.awt.Toolkit;
 import java.awt.datatransfer.DataFlavor;
@@ -323,6 +322,7 @@ public class Main extends JFrame implements ActionListener {
 					int reply = JOptionPane.showConfirmDialog(null, "Mod link has changed. Do you want to download it from the new link?", "Link changed", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
 					if (reply == JOptionPane.YES_OPTION) {
 						reinstallSelectedMod(mod);
+						mod.setLastDate(new Date());
 					}
 				}
 				saveConfigFile();
@@ -637,6 +637,13 @@ public class Main extends JFrame implements ActionListener {
 			}
 			HttpURLConnection conn = Http.getConnection(link);
 			
+			Map<String, List<String>> map = conn.getHeaderFields();
+			FileWriter f0 = new FileWriter("LatestDownloadHeaders.txt");
+			for (Map.Entry<String, List<String>> entry : map.entrySet()) {
+				f0.write(entry.getKey() + ": " + entry.getValue() + System.getProperty("line.separator"));
+			}
+			f0.close();
+			
 			if (conn == null) {
 				alertBox(null, (mod!=null?mod.getName():link) + ": Error getting download link.");
 				return null;
@@ -821,7 +828,7 @@ public class Main extends JFrame implements ActionListener {
 						if (gameTxt.size() == 1) {
 							File file = new File(gameTxt.get(0));
 							try {
-								Desktop.getDesktop().edit(file);
+								DesktopApi.edit(file);
 							} catch(Exception ex) {
 								ErrorLog.log(ex);
 							}
@@ -836,7 +843,7 @@ public class Main extends JFrame implements ActionListener {
 									@Override
 									public void actionPerformed(ActionEvent e) {
 										try {
-											Desktop.getDesktop().edit(file);
+											DesktopApi.edit(file);
 										} catch(Exception ex) {
 											ErrorLog.log(ex);
 										}
@@ -1351,7 +1358,7 @@ public class Main extends JFrame implements ActionListener {
 							}
 							if (configVersion == 6) {
 								for(Mod m: modList) {
-									if (m.getType() == Mod.TYPE_CURSE) {
+									if (m.getType() == Mod.TYPE_CURSEFORGE) {
 										String id = m.getUnprefixedId();
 										int index = id.indexOf("-");
 										if (index > -1) {
@@ -1446,7 +1453,7 @@ public class Main extends JFrame implements ActionListener {
 				renameSelectedMod();
 			} else if(e.getSource()==menuItemOpenLink) {
 				try {
-					Desktop.getDesktop().browse(new URI(this.mod.getLink()));
+					DesktopApi.browse(new URI(this.mod.getLink()));
 				} catch (Exception ee) {
 				}
 			} else if(e.getSource()==menuItemChangeLink) {
@@ -1502,7 +1509,7 @@ public class Main extends JFrame implements ActionListener {
 			System.exit(0);
 		} else {
 			if (ar.length > 0 && ar[0].equals("-u2")) {
-				JOptionPane.showMessageDialog(null, "Update done. Changelog:\n - Curse support added (fixed).\n - GitHub HTML change added.\n - Prefixes added", "Done!", JOptionPane.PLAIN_MESSAGE);
+				JOptionPane.showMessageDialog(null, "Update done. Changelog:\n - Curse.com support added.\n - Minor fixes", "Done!", JOptionPane.PLAIN_MESSAGE);
 			}
 			CookieHandler.setDefault( new CookieManager( null, CookiePolicy.ACCEPT_ALL ) );
 			if ((new File("temp")).exists()) {

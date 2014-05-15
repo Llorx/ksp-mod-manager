@@ -36,6 +36,8 @@ import javax.swing.JOptionPane;
 
 import java.util.regex.*;
 
+import java.util.Date;
+
 public class Browser {
 	WebEngine webEngine;
 	Worker webWorker;
@@ -129,6 +131,48 @@ public class Browser {
 		dialog.setVisible(true);
 	}
 	
+	private void checkLinkChange() {
+		String[][] patterns = {{
+			"CurseForge",
+			"(.*)(kerbal.curseforge.com\\/)([^\\/]*)(\\/)(\\d*)([^\\/]*)"
+		},{
+			"Curse",
+			"(.*)(curse.com\\/)([^\\/]*)(\\/kerbal\\/)(\\d*)([^\\/]*)"
+		},{
+			"GitHub",
+			"(.*)(github.com\\/)([^\\/]*)(\\/[^\\/]*)(\\/releases)"
+		}};
+		String link = lastClick;
+		for (String[] p: patterns) {
+			String name = p[0];
+			String pat = p[1];
+			if (link.matches(pat+"(.*)")) {
+				Pattern pattern = Pattern.compile(pat);
+				Matcher matcher = pattern.matcher(link);
+				if (matcher.find()) {
+					link = matcher.group(0);
+					int reply = JOptionPane.showConfirmDialog(null, "Detected a "+name+" link\nDo you want to check version updates directly from there in the future?", "Detected link", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+					if (reply == JOptionPane.YES_OPTION) {
+						modReloaded = true;
+						mod.reloadMod(link);
+						mod.setLastDate(new Date());
+						Platform.runLater(new Runnable() {
+							@Override
+							public void run() {
+								webWorker.cancel();
+								SwingUtilities.invokeLater(new Runnable(){
+									@Override public void run() {
+										dialog.dispose();
+									}
+								});
+							}
+						});
+					}
+				}
+			}
+		}
+	}
+	
 	private void initFX(JFXPanel fxPanel, String url) {
 
 		Group group = new Group();
@@ -154,33 +198,10 @@ public class Browser {
 					loading.setVisible(true);
 					dots = 0;
 					try {
-						int fileType = Http.fileType(lastClick);
 						if (mod != null) {
-							if (lastClick.indexOf("kerbal.curseforge.com/") > -1) {
-								String link = lastClick;
-								Pattern pattern = Pattern.compile("(.*)(kerbal.curseforge.com\\/)([^\\/]*)(\\/)(\\d*)([^\\/]*)");
-								Matcher matcher = pattern.matcher(link);
-								if (matcher.find()) {
-									link = matcher.group(0);
-									int reply = JOptionPane.showConfirmDialog(null, "Detected a Curse link\nDo you want to check version updates directly from there in the future?", "Detected Curse link", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
-									if (reply == JOptionPane.YES_OPTION) {
-										modReloaded = true;
-										mod.reloadMod(link);
-										Platform.runLater(new Runnable() {
-											@Override
-											public void run() {
-												webWorker.cancel();
-												SwingUtilities.invokeLater(new Runnable(){
-													@Override public void run() {
-														dialog.dispose();
-													}
-												});
-											}
-										});
-									}
-								}
-							}
+							checkLinkChange();
 						}
+						int fileType = Http.fileType(lastClick);
 						if (modReloaded == false && fileType != Http.HTML) {
 							if (fileType == Http.ZIP_EXTENSION) {
 								int reply = JOptionPane.showConfirmDialog(null, "Selected:\n" + lastClick + "\nAre you sure?", "Sure?", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
