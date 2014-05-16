@@ -41,6 +41,7 @@ public class Mod implements Serializable {
 	private boolean updatable = true;
 	private int type = Mod.TYPE_NONE;
 	private boolean installable = false;
+	private boolean saved = false;
 	
 	public boolean isMM = false;
 	
@@ -122,6 +123,9 @@ public class Mod implements Serializable {
 	public boolean isInstallable() {
 		return this.installable;
 	}
+	public boolean isSaved() {
+		return this.saved;
+	}
 	public Date getLastDate() {
 		return this.lastDate;
 	}
@@ -157,6 +161,9 @@ public class Mod implements Serializable {
 	}
 	public void setInstallable(boolean installable) {
 		this.installable = installable;
+	}
+	public void setSaved(boolean saved) {
+		this.saved = saved;
 	}
 	public void setLastDate(Date date) {
 		this.lastDate = date;

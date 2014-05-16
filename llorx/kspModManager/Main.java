@@ -557,8 +557,11 @@ public class Main extends JFrame implements ActionListener {
 					synchronized(lock) {
 						modInstallQeue.add(this.mod);
 					}
+				} else if (mod.isSaved() == false){
+					removeMod(mod);
 				} else {
-					removeMod(this.mod);
+					mod.setStatus("");
+					setMod(mod);
 				}
 				synchronized(lock) {
 					asyncDThread = null;
@@ -952,9 +955,12 @@ public class Main extends JFrame implements ActionListener {
 			setMod(this.mod);
 			alertBox(null, this.mod.getName() + ":\nFound " + gameDatas.size() + " GameData folders" + (gameTxt.size()>0?(" and " + gameTxt.size() + " README files."):(".")));
 			
+			uninstallMod(this.mod, false);
+			
 			JOptionPane.showMessageDialog(null, getPanel(gameDatas, gameTxt), "Install", JOptionPane.PLAIN_MESSAGE);
 			
 			this.mod.setStatus("");
+			this.mod.setSaved(true);
 			setMod(this.mod);
 			saveConfigFile();
 			DirIO.clearDir("temp" + File.separator + "GameData");
@@ -995,8 +1001,6 @@ public class Main extends JFrame implements ActionListener {
 						}
 						updated++;
 						if (mod.isInstallable()) {
-							uninstallMod(mod, false);
-							removeMod(mod);
 							updatedInstall++;
 							mod.setStatus(" - [Downloading - 0%] -");
 							setMod(mod);
@@ -1006,8 +1010,11 @@ public class Main extends JFrame implements ActionListener {
 								synchronized(lock) {
 									modInstallQeue.add(mod);
 								}
-							} else {
+							} else if (mod.isSaved() == false){
 								removeMod(mod);
+							} else {
+								mod.setStatus("");
+								setMod(mod);
 							}
 						} else {
 							mod.setStatus("");
@@ -1164,6 +1171,7 @@ public class Main extends JFrame implements ActionListener {
 			} else {
 				setMod(mod);
 				if (mod.isInstallable() == false) {
+					mod.setSaved(true);
 					saveConfigFile();
 				} else {
 					modQeue.add(mod);
@@ -1235,8 +1243,10 @@ public class Main extends JFrame implements ActionListener {
 
 			synchronized(lock) {
 				for(Mod mlist: modList) {
-					if (mlist.getStatus().equals("")) {
+					if (mlist.isSaved()) {
 						try {
+							String oldStatus = mlist.getStatus();
+							mlist.setStatus("");
 							String modFileName = "data" + File.separator + mlist.getUniqueId().toString() + File.separator + "Mod.object";
 							File modFile = new File(modFileName);
 							if (!modFile.getParentFile().exists()) {
@@ -1248,6 +1258,7 @@ public class Main extends JFrame implements ActionListener {
 							Element modFileNameElement = xmlDoc.createElement("modFileName");
 							modFileNameElement.setAttribute("file", modFileName);
 							rootElement.appendChild(modFileNameElement);
+							mlist.setStatus(oldStatus);
 						} catch (Exception e) {
 						}
 					}
@@ -1258,7 +1269,7 @@ public class Main extends JFrame implements ActionListener {
 			rootElement.appendChild(configElement);
 			
 			Element configVersionElement = xmlDoc.createElement("configVersion");
-			configVersionElement.appendChild(xmlDoc.createTextNode("7"));
+			configVersionElement.appendChild(xmlDoc.createTextNode("8"));
 			configElement.appendChild(configVersionElement);
 			
 			TransformerFactory transformerFactory = TransformerFactory.newInstance();
@@ -1324,7 +1335,7 @@ public class Main extends JFrame implements ActionListener {
 						Element element = (Element) node;
 						
 						int configVersion = Integer.parseInt(getNodeValue("configVersion", element));
-						if (configVersion == 7) {
+						if (configVersion == 8) {
 							// Config is OK.
 						} else {
 							if (configVersion <= 4) {
@@ -1345,7 +1356,6 @@ public class Main extends JFrame implements ActionListener {
 										m.isMM = true;
 									}
 								}
-								saveConfigFile();
 							}
 							if (configVersion < 5) {
 								for(Mod m: modList) {
@@ -1353,8 +1363,6 @@ public class Main extends JFrame implements ActionListener {
 										m.setLastDate(new Date());
 									}
 								}
-								listUpdate();
-								saveConfigFile();
 							}
 							if (configVersion == 6) {
 								for(Mod m: modList) {
@@ -1367,8 +1375,14 @@ public class Main extends JFrame implements ActionListener {
 										}
 									}
 								}
-								saveConfigFile();
 							}
+							if (configVersion <= 7) {
+								for(Mod m: modList) {
+									m.setSaved(true);
+								}
+							}
+							listUpdate();
+							saveConfigFile();
 						}
 					}
 				}
@@ -1509,7 +1523,7 @@ public class Main extends JFrame implements ActionListener {
 			System.exit(0);
 		} else {
 			if (ar.length > 0 && ar[0].equals("-u2")) {
-				JOptionPane.showMessageDialog(null, "Update done. Changelog:\n - Curse.com support added.\n - Minor fixes", "Done!", JOptionPane.PLAIN_MESSAGE);
+				JOptionPane.showMessageDialog(null, "Update done. Changelog:\n - Now mods will be uninstalled when installing a new file and not before downloading.\n - Minor fixes", "Done!", JOptionPane.PLAIN_MESSAGE);
 			}
 			CookieHandler.setDefault( new CookieManager( null, CookiePolicy.ACCEPT_ALL ) );
 			if ((new File("temp")).exists()) {

@@ -74,12 +74,10 @@ public class DesktopApi {
 	
         try {
             if (!Desktop.isDesktopSupported()) {
-                logErr("Platform is not supported.");
                 return false;
             }
 
             if (!Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
-                logErr("BORWSE is not supported.");
                 return false;
             }
 
@@ -87,7 +85,7 @@ public class DesktopApi {
 
             return true;
         } catch (Throwable t) {
-            logErr("Error using desktop browse.", t);
+            logErr(t);
             return false;
         }
     }
@@ -97,12 +95,10 @@ public class DesktopApi {
 
         try {
             if (!Desktop.isDesktopSupported()) {
-                logErr("Platform is not supported.");
                 return false;
             }
 
             if (!Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
-                logErr("OPEN is not supported.");
                 return false;
             }
 
@@ -110,7 +106,7 @@ public class DesktopApi {
 
             return true;
         } catch (Throwable t) {
-            logErr("Error using desktop open.", t);
+            logErr(t);
             return false;
         }
     }
@@ -120,12 +116,10 @@ public class DesktopApi {
 
         try {
             if (!Desktop.isDesktopSupported()) {
-                logErr("Platform is not supported.");
                 return false;
             }
 
             if (!Desktop.getDesktop().isSupported(Desktop.Action.EDIT)) {
-                logErr("EDIT is not supported.");
                 return false;
             }
 
@@ -133,7 +127,7 @@ public class DesktopApi {
 
             return true;
         } catch (Throwable t) {
-            logErr("Error using desktop edit.", t);
+            logErr(t);
             return false;
         }
     }
@@ -146,24 +140,11 @@ public class DesktopApi {
         try {
             Process p = Runtime.getRuntime().exec(parts);
             if (p == null) return false;
-
-            try {
-                int retval = p.exitValue();
-                if (retval == 0) {
-                    logErr("Process ended immediately.");
-                    return false;
-                } else {
-                    logErr("Process crashed.");
-                    return false;
-                }
-            } catch (IllegalThreadStateException itse) {
-                logErr("Process is running.");
-                return true;
-            }
         } catch (IOException e) {
-            logErr("Error running command.", e);
+            logErr(e);
             return false;
         }
+		return true;
     }
 
 
@@ -183,12 +164,12 @@ public class DesktopApi {
         return parts.toArray(new String[parts.size()]);
     }
 
-    private static void logErr(String msg, Throwable t) {
+    private static void logErr(Throwable t) {
         ErrorLog.log(t);
     }
 
     private static void logErr(String msg) {
-        logErr(msg, new Throwable(msg));
+        logErr(new Throwable(msg));
     }
 
     public static enum EnumOS {
