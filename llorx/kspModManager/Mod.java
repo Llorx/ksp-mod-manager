@@ -52,6 +52,7 @@ public class Mod implements Serializable {
 	public transient String downloadedFile = "";
 	public transient boolean nameChanged = false;
 	public transient boolean justUpdated = false;
+	public transient boolean errorUpdate = false;
 	
 	// Gets
 	public UUID getUniqueId() {

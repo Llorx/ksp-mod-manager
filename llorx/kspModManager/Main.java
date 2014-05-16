@@ -104,6 +104,7 @@ class IconTextCellRenderer extends DefaultTableCellRenderer {
 	
 	ImageIcon install = new ImageIcon(getClass().getResource("/images/install.png"));
 	ImageIcon online = new ImageIcon(getClass().getResource("/images/link.gif"));
+	ImageIcon error = new ImageIcon(getClass().getResource("/images/delete.png"));
 	SimpleDateFormat sdfDate = new SimpleDateFormat("dd MMM yyyy - kk:mm:ss");
 	
 	@Override
@@ -132,13 +133,17 @@ class IconTextCellRenderer extends DefaultTableCellRenderer {
 				if (!mod.getStatus().equals("")) {
 					setText(mod.getStatus());
 				} else {
-					if (mod.justUpdated == true) {
-						setIcon(online);
+					if (mod.errorUpdate == true) {
+						setIcon(error);
 					} else {
-						setFont(font.deriveFont(font.getStyle() & ~Font.BOLD));
+						if (mod.justUpdated == true) {
+							setIcon(online);
+						} else {
+							setFont(font.deriveFont(font.getStyle() & ~Font.BOLD));
+						}
 					}
 					if (mod.getLastDate() != null) {
-						setText((mod.justUpdated == true?"[New "+(mod.isInstallable()?" version installed":"update available")+"] ":"") + this.sdfDate.format(mod.getLastDate()) + " | " + mod.getPrefix());
+						setText((mod.justUpdated == true?"[New "+(mod.isInstallable()?" version installed":"update available")+"] ":(mod.errorUpdate == true?"[Error downloading] ":"")) + this.sdfDate.format(mod.getLastDate()) + " | " + mod.getPrefix());
 					}
 				}
 				break;
@@ -951,11 +956,12 @@ public class Main extends JFrame implements ActionListener {
 				ErrorLog.log(e);
 			}
 			int i = 0;
+			
+			uninstallMod(this.mod, false);
+			
 			this.mod.setStatus(" - [Installing...] -");
 			setMod(this.mod);
 			alertBox(null, this.mod.getName() + ":\nFound " + gameDatas.size() + " GameData folders" + (gameTxt.size()>0?(" and " + gameTxt.size() + " README files."):(".")));
-			
-			uninstallMod(this.mod, false);
 			
 			JOptionPane.showMessageDialog(null, getPanel(gameDatas, gameTxt), "Install", JOptionPane.PLAIN_MESSAGE);
 			
@@ -992,7 +998,10 @@ public class Main extends JFrame implements ActionListener {
 				if (closingApp == false && mod.getStatus().equals("")) {
 					mod.setStatus(" - [Checking...] -");
 					mod.justUpdated = false;
+					mod.errorUpdate = false;
 					setMod(mod);
+					String oldVersion = mod.getVersion();
+					Date oldDate = mod.getLastDate();
 					boolean newVersion = mod.checkVersion();
 					if (newVersion || force == true) {
 						if (newVersion) {
@@ -1010,9 +1019,13 @@ public class Main extends JFrame implements ActionListener {
 								synchronized(lock) {
 									modInstallQeue.add(mod);
 								}
-							} else if (mod.isSaved() == false){
+							} else if (mod.isSaved() == false) {
 								removeMod(mod);
 							} else {
+								mod.setVersion(oldVersion);
+								mod.setLastDate(oldDate);
+								mod.errorUpdate = true;
+								mod.justUpdated = false;
 								mod.setStatus("");
 								setMod(mod);
 							}
@@ -1245,8 +1258,6 @@ public class Main extends JFrame implements ActionListener {
 				for(Mod mlist: modList) {
 					if (mlist.isSaved()) {
 						try {
-							String oldStatus = mlist.getStatus();
-							mlist.setStatus("");
 							String modFileName = "data" + File.separator + mlist.getUniqueId().toString() + File.separator + "Mod.object";
 							File modFile = new File(modFileName);
 							if (!modFile.getParentFile().exists()) {
@@ -1258,7 +1269,6 @@ public class Main extends JFrame implements ActionListener {
 							Element modFileNameElement = xmlDoc.createElement("modFileName");
 							modFileNameElement.setAttribute("file", modFileName);
 							rootElement.appendChild(modFileNameElement);
-							mlist.setStatus(oldStatus);
 						} catch (Exception e) {
 						}
 					}
@@ -1313,6 +1323,7 @@ public class Main extends JFrame implements ActionListener {
 							ObjectInputStream obj_in = new ObjectInputStream (f_in);
 							
 							Mod mod = (Mod)obj_in.readObject();
+							mod.setStatus("");
 							setMod(mod);
 						} catch (Exception e) {
 						}
