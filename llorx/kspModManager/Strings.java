@@ -108,6 +108,7 @@ public class Strings {
 			
 	/* START EDITING HERE */
 	/* DO NOT REMOVE ANY LINE OR IT WON'T WORK */
+	/* EDIT ONLY STRINGS BETWEEN QUOTES (") AND ALSO DO NOT REMOVE TABS */
 			
 			
 			"Mod name", // Strings.MOD_NAME
