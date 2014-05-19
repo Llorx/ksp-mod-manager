@@ -440,11 +440,11 @@ public class ModDataParser {
 			JLabel titleLabel = new JLabel(mod.getName());
 			JLabel testLabel;
 			if (links != null && links.size() > 1) {
-				testLabel = new JLabel("Multiple links detected. What file do you want to install?");
+				testLabel = new JLabel(Strings.get(Strings.MULTIPLE_LINKS_ASK));
 			} else if (links != null && links.size() == 1) {
-				testLabel = new JLabel("This file was detected, do you want to install it?");
+				testLabel = new JLabel(Strings.get(Strings.ONE_LINK_DETECTED));
 			} else {
-				testLabel = new JLabel("No files detected. Download a file manually from the website.");
+				testLabel = new JLabel(Strings.get(Strings.NO_LINK_DETECTED));
 			}
 			Font font = testLabel.getFont();
 			Font boldFont1 = new Font(font.getFontName(), Font.BOLD, font.getSize()+2);
@@ -472,14 +472,14 @@ public class ModDataParser {
 						group.setSelected(b.getModel(), true);
 					}
 				}
-				int reply = JOptionPane.showOptionDialog(null, panel, "Install file", JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE, null, new String[]{"Download selected file", "Open website and download file from there"}, null);
+				int reply = JOptionPane.showOptionDialog(null, panel, Strings.get(Strings.INSTALL_FILE_TITLE), JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE, null, new String[]{Strings.get(Strings.DOWNLOAD_SELECTED_BUTTON), Strings.get(Strings.DOWNLOAD_SELECTED_BUTTON)}, null);
 				if (reply == JOptionPane.YES_OPTION) {
 					downloadLink = group.getSelection().getActionCommand();
 				} else {
 					browser.show(mod.getLink(), mod);
 				}
 			} else {
-				JOptionPane.showOptionDialog(null, panel, "Install file", JOptionPane.OK_OPTION, JOptionPane.PLAIN_MESSAGE, null, new String[]{"Open website and download file from there"}, null);
+				JOptionPane.showOptionDialog(null, panel, Strings.get(Strings.INSTALL_FILE_TITLE), JOptionPane.OK_OPTION, JOptionPane.PLAIN_MESSAGE, null, new String[]{Strings.get(Strings.DOWNLOAD_SELECTED_BUTTON)}, null);
 				browser.show(mod.getLink(), mod);
 			}
 			if (!browser.downloadFile.equals("")) {

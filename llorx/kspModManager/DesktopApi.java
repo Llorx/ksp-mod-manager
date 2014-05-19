@@ -10,6 +10,8 @@ import java.util.List;
 /*
 Credit: MightyPork @ StackOverflow.com
 Link: http://stackoverflow.com/questions/18004150/desktop-api-is-not-supported-on-the-current-platform
+
+Modded by Llorx
 */
 
 public class DesktopApi {

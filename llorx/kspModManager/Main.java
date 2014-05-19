@@ -14,12 +14,16 @@ import java.awt.Font;
 import java.awt.FlowLayout;
 import java.awt.Toolkit;
 import java.awt.datatransfer.DataFlavor;
+import java.awt.BorderLayout;
+import java.awt.GridLayout;
+import java.awt.Dimension;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.tree.*;
+import javax.swing.Box;
 
 import java.io.File;
 import javax.xml.parsers.DocumentBuilder;
@@ -87,9 +91,9 @@ class MyTableModel extends AbstractTableModel {
 	public String getColumnName(int column) {
 		switch (column) {
 			case 0:
-				return "Mod name";
+				return Strings.get(Strings.MOD_NAME);
 			case 1:
-				return "Latest date";
+				return Strings.get(Strings.LATEST_DATE);
 		}
 		return "";
 	}
@@ -143,7 +147,7 @@ class IconTextCellRenderer extends DefaultTableCellRenderer {
 						}
 					}
 					if (mod.getLastDate() != null) {
-						setText((mod.justUpdated == true?"[New "+(mod.isInstallable()?" version installed":"update available")+"] ":(mod.errorUpdate == true?"[Error downloading] ":"")) + this.sdfDate.format(mod.getLastDate()) + " | " + mod.getPrefix());
+						setText((mod.justUpdated == true?"["+(mod.isInstallable()?Strings.get(Strings.NEW_VERSION):Strings.get(Strings.NEW_UPDATE))+"] ":(mod.errorUpdate == true?"["+Strings.get(Strings.DOWNLOAD_ERROR)+"] ":"")) + this.sdfDate.format(mod.getLastDate()) + " | " + mod.getPrefix());
 					}
 				}
 				break;
@@ -174,12 +178,12 @@ public class Main extends JFrame implements ActionListener {
 	
 	Object lock = new Object();
 	
-	ManagerConfig config = new ManagerConfig(this);
-	
 	boolean closingApp = false;
 	
 	public Main() {
-		setLayout(null);
+		loadConfigFile();
+		
+		setLayout(new BorderLayout());
 		
 		addWindowListener(new WindowAdapter() {
 			@Override
@@ -193,46 +197,62 @@ public class Main extends JFrame implements ActionListener {
 						}
 					}
 				}
+				saveConfigFile();
 				if ((new File("temp")).exists()) {
 					DirIO.clearDir("temp");
 				}
 			}
 		});
 		
-		Border line = BorderFactory.createLineBorder(Color.DARK_GRAY);
-		Border empty = new EmptyBorder(1, 1, 1, 1);
-		CompoundBorder border = new CompoundBorder(line, empty);
+		JPanel panelTop = new JPanel();
+		panelTop.setLayout(new BoxLayout(panelTop, BoxLayout.LINE_AXIS));
+		panelTop.setBorder(new EmptyBorder(2, 2, 2, 2));
+		add(panelTop, BorderLayout.NORTH);
 		
-		configBut=new JButton("Config");
-		configBut.setBounds(2,2,150,40);
-		add(configBut);
+		JPanel panelConfig = new JPanel(new GridLayout(1, 1, 2, 2));
+		panelTop.add(panelConfig);
+		
+		ImageIcon config = new ImageIcon(getClass().getResource("/images/config.png"));
+		
+		configBut=new JButton(Strings.get(Strings.CONFIG_BUTTON));
+		panelConfig.add(configBut);
+		configBut.setIcon(config);
 		configBut.addActionListener(this);
 		
-		downloadBut=new JButton("[+] Download mod");
-		downloadBut.setBounds(242,2,250,19);
-		add(downloadBut);
+		panelTop.add(Box.createHorizontalGlue());
+		
+		JPanel panelDownload = new JPanel(new GridLayout(2, 1, 2, 2));
+		panelTop.add(panelDownload);
+		
+		downloadBut=new JButton("[+] " + Strings.get(Strings.DOWNLOAD_MOD));
+		panelDownload.add(downloadBut);
 		downloadBut.addActionListener(this);
 		
-		installBut=new JButton("Install Queued mods");
-		installBut.setBounds(242,23,250,19);
-		add(installBut);
+		installBut=new JButton(Strings.get(Strings.INSTALL_QUEUED));
+		panelDownload.add(installBut);
 		installBut.addActionListener(this);
 		installBut.setEnabled(false);
 		
-		mmButton=new JButton("Download Module Manager");
-		mmButton.setBounds(2,450,250,20);
-		add(mmButton);
+		JPanel panelBottom = new JPanel();
+		panelBottom.setLayout(new BoxLayout(panelBottom, BoxLayout.LINE_AXIS));
+		panelBottom.setBorder(new EmptyBorder(2, 2, 2, 2));
+		add(panelBottom, BorderLayout.SOUTH);
+		
+		mmButton=new JButton(Strings.get(Strings.DOWNLOAD_MM));
+		panelBottom.add(mmButton);
 		mmButton.addActionListener(this);
 		
-		updateBut=new JButton("Check mod updates");
-		updateBut.setBounds(340,450,150,20);
-		add(updateBut);
+		panelBottom.add(Box.createHorizontalGlue());
+		
+		updateBut=new JButton(Strings.get(Strings.CHECK_MOD_UPDATES));
+		panelBottom.add(updateBut);
 		updateBut.addActionListener(this);
+		
+		
 		
 		mainList = new JTable(new MyTableModel(modList));
 		JScrollPane barraDesplazamiento = new JScrollPane(mainList); 
-		barraDesplazamiento.setBounds(2,47,490,400);
-		add(barraDesplazamiento);
+		add(barraDesplazamiento, BorderLayout.CENTER);
 		mainList.getTableHeader().setReorderingAllowed(false);
 		
 		IconTextCellRenderer cellRenderer = new IconTextCellRenderer();
@@ -274,7 +294,7 @@ public class Main extends JFrame implements ActionListener {
 		synchronized(lock) {
 			Mod mod = getSelectedMod();
 			if (mod != null && mod.getStatus().equals("")) {
-				String newName = JOptionPane.showInputDialog(null, "What is the new name?", mod.getName());
+				String newName = JOptionPane.showInputDialog(null, Strings.get(Strings.NEW_NAME_QUESTION), mod.getName());
 				if (newName != null && newName.length() > 0) {
 					mod.setName(newName);
 					setMod(mod);
@@ -309,7 +329,7 @@ public class Main extends JFrame implements ActionListener {
 						}
 					} catch (Exception e) {
 					}
-					String newLink = JOptionPane.showInputDialog(null, "What is the new download link?", cbData);
+					String newLink = JOptionPane.showInputDialog(null, Strings.get(Strings.NEW_LINK_QUESTION), cbData);
 					if (newLink != null && newLink.length() > 0) {
 						mod.reloadMod(newLink);
 					} else {
@@ -319,12 +339,12 @@ public class Main extends JFrame implements ActionListener {
 						break;
 					}
 					if (mod.isValid == false) {
-						alertBox(null, "Error parsing link.");
+						alertBox(null, Strings.get(Strings.ERROR_PARSING_LINK));
 					}
 				} while (mod.isValid == false);
 				setMod(mod);
 				if (!mod.getLink().equals(oldLink)) {
-					int reply = JOptionPane.showConfirmDialog(null, "Mod link has changed. Do you want to download it from the new link?", "Link changed", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+					int reply = JOptionPane.showConfirmDialog(null, Strings.get(Strings.LINK_CHANGED_DOWNLOAD_AGAIN), Strings.get(Strings.LINK_CHANGED_TITLE), JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
 					if (reply == JOptionPane.YES_OPTION) {
 						reinstallSelectedMod(mod);
 						mod.setLastDate(new Date());
@@ -359,9 +379,9 @@ public class Main extends JFrame implements ActionListener {
 			if (mod != null && mod.getStatus().equals("")) {
 				int reply;
 				if (mod.isInstallable() == false) {
-					reply = JOptionPane.showConfirmDialog(null, "Do you want to remove the mod from the list?", "Delete Mod", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+					reply = JOptionPane.showConfirmDialog(null, Strings.get(Strings.DELETE_SURE), Strings.get(Strings.DELETE_MOD_TITLE), JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
 				} else {
-					reply = JOptionPane.showOptionDialog(null, "Do you want to delete it completely or only uninstall it but keep track of new versions?", "Delete Mod", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, new String[]{"Delete completely", "Uninstall but keep in list to check versions", "Cancel"}, null);
+					reply = JOptionPane.showOptionDialog(null, Strings.get(Strings.DELETE_MOD_COMPLETELY_ASK), Strings.get(Strings.DELETE_MOD_TITLE), JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, new String[]{Strings.get(Strings.DELETE_COMPLETELY_BUTTON), Strings.get(Strings.KEEP_VERSION_BUTTON), Strings.get(Strings.CANCEL_BUTTON)}, null);
 				}
 				if (reply == JOptionPane.YES_OPTION || (mod.isInstallable() && reply == JOptionPane.NO_OPTION)) {
 					uninstallMod(mod);
@@ -385,9 +405,9 @@ public class Main extends JFrame implements ActionListener {
 				nextInstall();
 			}
 		} else if(e.getSource()==mmButton) {
-			Mod mod = getAddon("Module Manager dll", config.moduleManagerLink);
+			Mod mod = getAddon("Module Manager dll", ManagerConfig.moduleManagerLink);
 			if (mod == null) {
-				alertBox(null, "Error adding Module Manager Mod.");
+				alertBox(null, Strings.get(Strings.ERROR_MM));
 			} else {
 				mod.isMM = true;
 			}
@@ -412,7 +432,7 @@ public class Main extends JFrame implements ActionListener {
 		List<Path> parents = new ArrayList<Path>();
 		List<Path> parentsNotRemoved = new ArrayList<Path>();
 		
-		Path mainData = Paths.get(config.kspDataFolder);
+		Path mainData = Paths.get(ManagerConfig.kspDataFolder);
 		
 		for (ModFile f: mod.getInstalledFiles()) {
 			Path file = f.getPath();
@@ -488,7 +508,7 @@ public class Main extends JFrame implements ActionListener {
 					FileWriter f0 = new FileWriter("log.txt", true);
 					String newLine = System.getProperty("line.separator");
 					Date d = new Date();
-					f0.write(newLine + newLine + "********* " + getCurrentTimeStamp() + " *********" + newLine + " - Error removing mod " + mod.getName() + " because these directories were not empty:" + newLine);
+					f0.write(newLine + newLine + "********* " + getCurrentTimeStamp() + " *********" + newLine + " - " + Strings.get(Strings.LOG_DIR_EMPTY).replace("%MODNAME%", mod.getName()) + ":" + newLine);
 					for(int i=0;i<parentsNotRemoved.size();i++) {
 						try {
 							f0.write(parentsNotRemoved.get(i).toFile().getCanonicalPath() + newLine);
@@ -500,14 +520,14 @@ public class Main extends JFrame implements ActionListener {
 				} catch (Exception e) {
 					
 				}
-				alertBox(null, "Could not remove some directories because they were not empty. Maybe the mod is merged with another mod or simply the mod created a config file on the fly.\nCheck those directories manually AFTER closing this app. You have the list in the log.txt file.");
+				alertBox(null, Strings.get(Strings.LOG_DIR_EMPTY_ERROR));
 			}
 			if (updatedFiles.size() > 0) {
 				try {
 					FileWriter f0 = new FileWriter("log.txt", true);
 					String newLine = System.getProperty("line.separator");
 					Date d = new Date();
-					f0.write(newLine + newLine + "********* " + getCurrentTimeStamp() + " *********" + newLine + " - Error removing mod " + mod.getName() + " because these files overwrited some other files:" + newLine);
+					f0.write(newLine + newLine + "********* " + getCurrentTimeStamp() + " *********" + newLine + " - " + Strings.get(Strings.LOG_OVERWRITTEN_FILES).replace("%MODNAME%", mod.getName()) + ":" + newLine);
 					for(int i=0;i<updatedFiles.size();i++) {
 						try {
 							f0.write(updatedFiles.get(i).toFile().getCanonicalPath() + newLine);
@@ -519,7 +539,7 @@ public class Main extends JFrame implements ActionListener {
 				} catch (Exception e) {
 					
 				}
-				alertBox(null, "Some files could not be removed because they replaced other mod files, you must check and decide if you remove them manually AFTER closing this app.\nYou have the list in the log.txt file.");
+				alertBox(null, Strings.get(Strings.LOG_OVERWRITTEN_FILES_ERROR));
 			}
 		}
 	}
@@ -554,10 +574,10 @@ public class Main extends JFrame implements ActionListener {
 		@Override
 		public void run() {
 			try {
-				this.mod.setStatus(" - [Downloading - 0%] -");
+				this.mod.setStatus(" - ["+Strings.get(Strings.DOWNLOADING)+" - 0%] -");
 				setMod(this.mod);
 				if (downloadMod(this.mod)) {
-					this.mod.setStatus(" - [Install Queue] -");
+					this.mod.setStatus(" - ["+Strings.get(Strings.INSTALL_QUEUE)+"] -");
 					setMod(this.mod);
 					synchronized(lock) {
 						modInstallQeue.add(this.mod);
@@ -589,7 +609,7 @@ public class Main extends JFrame implements ActionListener {
 				if (!f.exists()) {
 					f.mkdirs();
 				} else if (!f.isDirectory()) {
-					alertBox(null, mod.getName() + ": Error accesing temp folder.");
+					alertBox(null, mod.getName() + ": " + Strings.get(Strings.ERROR_TEMP));
 					return false;
 				}
 			}
@@ -597,7 +617,7 @@ public class Main extends JFrame implements ActionListener {
 			if (mod.getDownloadLink().equals("")) {
 				String link = ModDataParser.getDownloadLink(mod);
 				if (link.equals("")) {
-					alertBox(null, mod.getName() + ": Error getting download link.");
+					alertBox(null, mod.getName() + ": " + Strings.get(Strings.ERROR_DOWNLOAD_LINK));
 					return false;
 				} else {
 					mod.setDownloadLink(link);
@@ -639,7 +659,7 @@ public class Main extends JFrame implements ActionListener {
 				if (dlink != null && Http.fileType(dlink) == Http.ZIP_EXTENSION) {
 					link = dlink;
 				} else {
-					alertBox(null, (mod!=null?mod.getName():link) + ": Error getting download link.");
+					alertBox(null, (mod!=null?mod.getName():link) + ": " + Strings.get(Strings.ERROR_DOWNLOAD_LINK));
 					return null;
 				}
 			}
@@ -653,7 +673,7 @@ public class Main extends JFrame implements ActionListener {
 			f0.close();
 			
 			if (conn == null) {
-				alertBox(null, (mod!=null?mod.getName():link) + ": Error getting download link.");
+				alertBox(null, (mod!=null?mod.getName():link) + ": " + Strings.get(Strings.ERROR_DOWNLOAD_LINK));
 				return null;
 			}
 			
@@ -688,7 +708,7 @@ public class Main extends JFrame implements ActionListener {
 				if (lastPerc != perc) {
 					lastPerc = perc;
 					if (mod != null) {
-						mod.setStatus(" - [Downloading - "+lastPerc+"%] -");
+						mod.setStatus(" - ["+Strings.get(Strings.DOWNLOADING)+" - "+lastPerc+"%] -");
 						setMod(mod);
 					}
 				}
@@ -718,21 +738,21 @@ public class Main extends JFrame implements ActionListener {
 	}
 	
 	String[] getExcludeList(Mod mod) {
-		String[] undeededFilesArray = new String[]{"(source)", "(sources)", "(.*)(.txt)", "(.*)(.asciidoc)", "(.*)(.md)"};
+		String[] undeededFilesArray = new String[]{"(source)", "(sources)", "(.*)(\\.txt)", "(.*)(\\.asciidoc)", "(.*)(\\.md)", "(.*)(source)(.*)(\\.zip)"};
 		String[] mmArray = new String[]{"(modulemanager)(.*)(\\.dll)"};
 		int arraysize = 0;
-		if (config.excludeUnneededFiles == true) {
+		if (ManagerConfig.excludeUnneededFiles == true) {
 			arraysize += undeededFilesArray.length;
 		}
-		if (config.excludeModuleManagerDll == true && mod.isMM == false) {
+		if (ManagerConfig.excludeModuleManagerDll == true && mod.isMM == false) {
 			arraysize += mmArray.length;
 		}
 		String[] excludeList = new String[arraysize];
-		if (config.excludeUnneededFiles == true) {
+		if (ManagerConfig.excludeUnneededFiles == true) {
 			System.arraycopy(undeededFilesArray, 0, excludeList, 0, undeededFilesArray.length);
 		}
-		if (config.excludeModuleManagerDll == true && mod.isMM == false) {
-			System.arraycopy(mmArray, 0, excludeList, (config.excludeUnneededFiles?undeededFilesArray.length:0), mmArray.length);
+		if (ManagerConfig.excludeModuleManagerDll == true && mod.isMM == false) {
+			System.arraycopy(mmArray, 0, excludeList, (ManagerConfig.excludeUnneededFiles?undeededFilesArray.length:0), mmArray.length);
 		}
 		return excludeList;
 	}
@@ -749,7 +769,7 @@ public class Main extends JFrame implements ActionListener {
 		List<ModFile> copyFiles(String mainPath, String copyPath) {
 			List<ModFile> copied = new ArrayList<ModFile>();
 			
-			Path target = Paths.get(config.kspDataFolder);
+			Path target = Paths.get(ManagerConfig.kspDataFolder);
 			
 			Path dir = Paths.get(mainPath, copyPath);
 			Path mainDir = Paths.get(mainPath);
@@ -789,13 +809,13 @@ public class Main extends JFrame implements ActionListener {
 							f.setUpdated(true);
 							if (forceCopy == -1) {
 								String relPath = relativePath.toFile().getPath();
-								JCheckBox c = new JCheckBox("Remember this selection");
+								JCheckBox c = new JCheckBox(Strings.get(Strings.SELECTION_REMEMBER));
 								final JComponent[] inputs = new JComponent[] {
-									new JLabel("Do you want to overwrite this file?"),
+									new JLabel(Strings.get(Strings.OVERWRITE_ASK)),
 									new JLabel("GameData" + File.separator + relPath),
 									c
 								};
-								int reply = JOptionPane.showConfirmDialog(null, inputs, "Add new mod", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+								int reply = JOptionPane.showConfirmDialog(null, inputs, Strings.get(Strings.ADD_MOD_TITLE), JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
 								if (reply == JOptionPane.YES_OPTION) {
 									copy = true;
 								}
@@ -829,7 +849,7 @@ public class Main extends JFrame implements ActionListener {
 			panel.add(titleTxt);
 			
 			if (gameTxt.size() > 0) {
-				JButton readmeBut = new JButton("Open README file (May have install instructions)");
+				JButton readmeBut = new JButton(Strings.get(Strings.OPEN_README));
 				readmeBut.addActionListener(new ActionListener() {
 					@Override
 					public void actionPerformed(ActionEvent e) {
@@ -859,14 +879,14 @@ public class Main extends JFrame implements ActionListener {
 								});
 								readmePanel.add(but);
 							}
-							JOptionPane.showMessageDialog(null, readmePanel, "Readme files", JOptionPane.PLAIN_MESSAGE);
+							JOptionPane.showMessageDialog(null, readmePanel, Strings.get(Strings.README_FILES_TITLE), JOptionPane.PLAIN_MESSAGE);
 						}
 					}
 				});
 				readmeBut.setAlignmentX(Component.CENTER_ALIGNMENT);
 				panel.add(readmeBut);
 			}
-			JLabel installTxt = new JLabel("Mark items to install");
+			JLabel installTxt = new JLabel(Strings.get(Strings.MARK_INSTALL));
 			installTxt.setAlignmentX(Component.CENTER_ALIGNMENT);
 			panel.add(installTxt);
 			
@@ -889,13 +909,13 @@ public class Main extends JFrame implements ActionListener {
 				f.setBorder(BorderFactory.createTitledBorder(gdataTxt));
 				gameDataPanel.add(f);
 				
-				JButton but = new JButton("Install this GameData");
+				JButton but = new JButton(Strings.get(Strings.INSTALL_GAMEDATA));
 				but.setAlignmentX(Component.CENTER_ALIGNMENT);
 				Mod mod = this.mod;
 				but.addActionListener(new ActionListener() {
 					@Override
 					public void actionPerformed(ActionEvent e) {
-						but.setText("Install again");
+						but.setText(Strings.get(Strings.INSTALL_AGAIN));
 						TreePath[] files = f.checkTreeManager.getSelectionModel().getSelectionPaths();
 						List<ModFile> installedFiles = new ArrayList<ModFile>();
 						if (files != null) {
@@ -915,7 +935,7 @@ public class Main extends JFrame implements ActionListener {
 						for (ModFile f: installedFiles) {
 							mod.addInstalledFile(f);
 						}
-						alertBox(null, "Installed " + installedFiles.size() + " files.");
+						alertBox(null, Strings.get(Strings.INSTALLED_COUNT).replace("%NUMBER%", String.valueOf(installedFiles.size())));
 					}
 				});
 				gameDataPanel.add(but);
@@ -929,7 +949,7 @@ public class Main extends JFrame implements ActionListener {
 		
 		@Override
 		public void run() {
-			this.mod.setStatus(" - [Extracting...] -");
+			this.mod.setStatus(" - ["+Strings.get(Strings.EXTRACTING)+"] -");
 			setMod(this.mod);
 			List<String> gameDatas = new ArrayList<String>();
 			List<String> gameTxt = new ArrayList<String>();
@@ -959,11 +979,15 @@ public class Main extends JFrame implements ActionListener {
 			
 			uninstallMod(this.mod, false);
 			
-			this.mod.setStatus(" - [Installing...] -");
+			this.mod.setStatus(" - ["+Strings.get(Strings.INSTALLING)+"] -");
 			setMod(this.mod);
-			alertBox(null, this.mod.getName() + ":\nFound " + gameDatas.size() + " GameData folders" + (gameTxt.size()>0?(" and " + gameTxt.size() + " README files."):(".")));
+			String found = Strings.get(Strings.AFTERINSTALL_1).replace("%GDATANUMBER%", String.valueOf(gameDatas.size()));
+			if (gameTxt.size()>0) {
+				found = found + Strings.get(Strings.AFTERINSTALL_2).replace("%READMENUMBER%", String.valueOf(gameTxt.size()));
+			}
+			alertBox(null, this.mod.getName() + ":\n" + found);
 			
-			JOptionPane.showMessageDialog(null, getPanel(gameDatas, gameTxt), "Install", JOptionPane.PLAIN_MESSAGE);
+			JOptionPane.showMessageDialog(null, getPanel(gameDatas, gameTxt), Strings.get(Strings.INSTALL_TITLE), JOptionPane.PLAIN_MESSAGE);
 			
 			this.mod.setStatus("");
 			this.mod.setSaved(true);
@@ -996,7 +1020,7 @@ public class Main extends JFrame implements ActionListener {
 			int updatedInstall = 0;
 			for (Mod mod: this.updateList) {
 				if (closingApp == false && mod.getStatus().equals("")) {
-					mod.setStatus(" - [Checking...] -");
+					mod.setStatus(" - ["+Strings.get(Strings.CHECKING)+"] -");
 					mod.justUpdated = false;
 					mod.errorUpdate = false;
 					setMod(mod);
@@ -1010,11 +1034,10 @@ public class Main extends JFrame implements ActionListener {
 						}
 						updated++;
 						if (mod.isInstallable()) {
-							updatedInstall++;
-							mod.setStatus(" - [Downloading - 0%] -");
+							mod.setStatus(" - ["+Strings.get(Strings.DOWNLOADING)+" - 0%] -");
 							setMod(mod);
 							if (downloadMod(mod)) {
-								mod.setStatus(" - [Install Queue] -");
+								mod.setStatus(" - ["+Strings.get(Strings.INSTALL_QUEUE)+"] -");
 								setMod(mod);
 								synchronized(lock) {
 									modInstallQeue.add(mod);
@@ -1042,7 +1065,7 @@ public class Main extends JFrame implements ActionListener {
 			saveConfigFile();
 			if (closingApp == false) {
 				if (updated > 0 && force == false) {
-					alertBox(null, "Found " + updated + " mods updated. " + (updatedInstall==updated?"All":(updatedInstall>0?updatedInstall:"None")) + " of them were added to the Install Queue.");
+					alertBox(null, Strings.get(Strings.UPDATED_QUANTITY).replace("%UPDATEDCOUNT%", String.valueOf(updated)));
 				}
 				/*if (noInstallList.size() > 0) {
 					JPanel panel = new JPanel();
@@ -1145,7 +1168,7 @@ public class Main extends JFrame implements ActionListener {
 			}
 		} catch( Exception e) {
 		}
-		JCheckBox check = new JCheckBox("Do not install, only warn me when there's a new version.");
+		JCheckBox check = new JCheckBox(Strings.get(Strings.WARN_VERSION_CHECK));
 		int reply = JOptionPane.OK_OPTION;
 		
 		while((urlText.length() == 0 || name.length() == 0) && reply == JOptionPane.OK_OPTION) {
@@ -1157,7 +1180,7 @@ public class Main extends JFrame implements ActionListener {
 				check
 			};
 			modName.addAncestorListener( new RequestFocusListener() );
-			reply = JOptionPane.showConfirmDialog(null, inputs, "Add new mod", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+			reply = JOptionPane.showConfirmDialog(null, inputs, Strings.get(Strings.ADD_MOD_TITLE), JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
 			if (reply == JOptionPane.OK_OPTION) {
 				urlText = modUrl.getText();
 				name = modName.getText();
@@ -1171,16 +1194,16 @@ public class Main extends JFrame implements ActionListener {
 			Mod mod = new Mod(name, urlText, !check.isSelected());
 			for (Mod m: modList) {
 				if (m.getId().equals(mod.getId())) {
-					alertBox(null, "That mod already exists in the mod list under name: " + m.getName());
+					alertBox(null, Strings.get(Strings.ALREADY_ERROR).replace("%MODNAME%", m.getName()));
 					return null;
 				}
 			}
 			
 			if (mod.isInstallable()) {
-				mod.setStatus(" - [Download Queue] -");
+				mod.setStatus(" - ["+Strings.get(Strings.DOWNLOAD_QUEUE)+"] -");
 			}
 			if (mod.isValid == false) {
-				alertBox(null, "Error getting mod " + mod.getName() + ". Check the URL.");
+				alertBox(null, Strings.get(Strings.ERROR_MOD_URL).replace("%MODNAME%", mod.getName()));
 			} else {
 				setMod(mod);
 				if (mod.isInstallable() == false) {
@@ -1288,14 +1311,14 @@ public class Main extends JFrame implements ActionListener {
 			StreamResult result = new StreamResult(f);
 			transformer.transform(source, result);
 			
-			File managerConfigFile = new File("data" + File.separator + "ManagerConfig.object");
-			if (!managerConfigFile.getParentFile().exists()) {
-				managerConfigFile.getParentFile().mkdirs();
-			}
-			ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(managerConfigFile));
-			out.writeObject(config);
-			out.close();
+			ManagerConfig.mainWindowWidth = this.getWidth();
+			ManagerConfig.mainWindowHeight = this.getHeight();
 			
+			FileOutputStream fos = new FileOutputStream("data" + File.separator + "ManagerConfig.object");
+			ObjectOutputStream oos = new ObjectOutputStream(fos);
+			oos.writeObject(new ManagerConfig());
+			oos.flush();
+			oos.close();
 		} catch (Exception ex) {
 			ErrorLog.log(ex);
 		}
@@ -1303,7 +1326,31 @@ public class Main extends JFrame implements ActionListener {
 	
 	void loadConfigFile() {
 		try {
-			File stocks = new File("data/config.xml");
+			try {
+				FileInputStream fis = new FileInputStream("data" + File.separator + "ManagerConfig.object");
+				ObjectInputStream ois = new ObjectInputStream(fis);
+				ois.readObject();
+				ois.close();
+			} catch (Exception e) {
+			}
+			if (ManagerConfig.locale == -1) {
+				ManagerConfig.localeSelected = false;
+				String locale = System.getProperty("user.language").toLowerCase();
+				for (int i = 0; i < Strings.locales.length; i++) {
+					if (Strings.locales[i].equals(locale)) {
+						ManagerConfig.locale = i;
+						break;
+					}
+				}
+				if (ManagerConfig.locale == -1) {
+					ManagerConfig.locale = 0;
+				}
+			} else {
+				ManagerConfig.localeSelected = true;
+			}
+			Strings.startUp();
+			
+			File stocks = new File("data"+File.separator+"config.xml");
 			if (stocks.exists()) {
 				DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
 				DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
@@ -1330,14 +1377,6 @@ public class Main extends JFrame implements ActionListener {
 					}
 				}
 				
-				try {
-					FileInputStream f_in = new FileInputStream("data" + File.separator + "ManagerConfig.object");
-					ObjectInputStream obj_in = new ObjectInputStream (f_in);
-					config = (ManagerConfig)obj_in.readObject();
-					config.main = this;
-				} catch (Exception ex) {
-				}
-				
 				nodes = doc.getElementsByTagName("config");
 				if (nodes.getLength() > 0) {
 					Node node = nodes.item(0);
@@ -1353,11 +1392,11 @@ public class Main extends JFrame implements ActionListener {
 								Mod mod;
 								int tryouts = 0;
 								do {
-									mod = new Mod("Module manager dll", config.moduleManagerLink, true);
+									mod = new Mod("Module manager dll", ManagerConfig.moduleManagerLink, true);
 									if (mod == null) {
 										tryouts++;
 										if (tryouts > 20) {
-											alertBox(null, "Error updating config. Try again in some minutes.");
+											alertBox(null, Strings.get(Strings.ERROR_UPDATING_CONFIG));
 											System.exit(0);
 										}
 									}
@@ -1401,20 +1440,18 @@ public class Main extends JFrame implements ActionListener {
 		} catch (Exception ex) {
 			ErrorLog.log(ex);
 		}
-		File f = new File(config.kspDataFolder);
-		if (config.kspDataFolder.equals("") || !f.exists() || !f.isDirectory()) {
-			if (config.selectKspFolder() == false) {
+		File f = new File(ManagerConfig.kspDataFolder);
+		if (ManagerConfig.kspDataFolder.equals("") || !f.exists() || !f.isDirectory()) {
+			if (ManagerConfig.selectKspFolder() == false) {
 				System.exit(0);
 			} else {
 				saveConfigFile();
 			}
 		}
-		
-		config.checkVersion();
 	}
 	
 	void openConfigWindow() {
-		config.change();
+		ManagerConfig.change();
 		saveConfigFile();
 	}
 	
@@ -1425,22 +1462,22 @@ public class Main extends JFrame implements ActionListener {
 	}
 	
 	class MyPopMenu extends JPopupMenu implements ActionListener {
-		JMenuItem menuItemRename = new JMenuItem("Rename", new ImageIcon(getClass().getResource("/images/rename.gif")));
-		JMenuItem menuItemOpenLink = new JMenuItem("Open mod link in browser", new ImageIcon(getClass().getResource("/images/link.gif")));
-		JMenuItem menuItemChangeLink = new JMenuItem("Change mod link", new ImageIcon(getClass().getResource("/images/download_link.png")));
-		JMenuItem menuItemReinstall = new JMenuItem("Redownload", new ImageIcon(getClass().getResource("/images/install.png")));
-		JMenuItem menuItemUpdate = new JMenuItem("Check update", new ImageIcon(getClass().getResource("/images/update.png")));
-		JMenuItem menuItemDelete = new JMenuItem("Uninstall", new ImageIcon(getClass().getResource("/images/delete.png")));
+		JMenuItem menuItemRename = new JMenuItem(Strings.get(Strings.MENU_RENAME), new ImageIcon(getClass().getResource("/images/rename.gif")));
+		JMenuItem menuItemOpenLink = new JMenuItem(Strings.get(Strings.MENU_OPEN_BROWSER), new ImageIcon(getClass().getResource("/images/link.gif")));
+		JMenuItem menuItemChangeLink = new JMenuItem(Strings.get(Strings.MENU_CHANGE_LINK), new ImageIcon(getClass().getResource("/images/download_link.png")));
+		JMenuItem menuItemReinstall = new JMenuItem(Strings.get(Strings.MENU_REDOWNLOAD), new ImageIcon(getClass().getResource("/images/install.png")));
+		JMenuItem menuItemUpdate = new JMenuItem(Strings.get(Strings.MENU_CHECK_UPDATE), new ImageIcon(getClass().getResource("/images/update.png")));
+		JMenuItem menuItemDelete = new JMenuItem(Strings.get(Strings.MENU_UNINSTALL), new ImageIcon(getClass().getResource("/images/delete.png")));
 		
-		JMenuItem menuItemAllDisabled = new JMenuItem("Disabled because of Download/Install operations");
+		JMenuItem menuItemAllDisabled = new JMenuItem(Strings.get(Strings.MENU_DISABLED));
 		
 		Mod mod;
 		
 		public MyPopMenu(Mod mod) {
 			this.mod = mod;
 			if (this.mod.isInstallable() == false) {
-				menuItemReinstall.setText("Download");
-				menuItemDelete.setText("Remove");
+				menuItemReinstall.setText(Strings.get(Strings.MENU_DOWNLOAD));
+				menuItemDelete.setText(Strings.get(Strings.MENU_REMOVE));
 			}
 			
 			if (asyncDThread != null) {
@@ -1493,6 +1530,67 @@ public class Main extends JFrame implements ActionListener {
 		}
 	}
 	
+	public void checkVersion() {
+		boolean updateFound = false;
+		String LMMversion = "v0.1.8alpha";
+		try {
+			org.jsoup.nodes.Document doc = Http.get("http://forum.kerbalspaceprogram.com/threads/78861").parse();
+			org.jsoup.nodes.Element title = doc.select("span[class=threadtitle]").first();
+			if (title != null) {
+				String v = title.text();
+				int index = v.lastIndexOf("-");
+				if (index > -1) {
+					v = v.substring(index+1).trim();
+					if (!LMMversion.equals(v)) {
+						int reply = JOptionPane.showConfirmDialog(null, Strings.get(Strings.NEW_MANAGER_UPDATE), Strings.get(Strings.NEW_MANAGER_UPDATE_TITLE), JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+						if (reply == JOptionPane.YES_OPTION) {
+							JOptionPane.showMessageDialog(null, Strings.get(Strings.UPDATING_TEXT), Strings.get(Strings.UPDATING_TITLE), JOptionPane.PLAIN_MESSAGE);
+							updateFound = true;
+							org.jsoup.nodes.Element posts = doc.select("ol[id=posts]").first();
+							if (posts != null) {
+								org.jsoup.nodes.Element post = posts.select("li[id^=post_]").first();
+								if (post != null) {
+									org.jsoup.nodes.Element linkEl = post.select("a[href*=.zip]").first();
+									if (linkEl != null) {
+										String link = linkEl.attr("href");
+										if (link.length() > 0) {
+											String filename = downloadFile(link, null);
+											if (filename != null) {
+												File f = new File("temp" + File.separator + filename);
+												boolean error = false;
+												try {
+													Zip.extract("temp" + File.separator + filename, "temp" + File.separator + "LMMupdate");
+												} catch (Exception e) {
+													ErrorLog.log(e);
+													error = true;
+												}
+												if (error == false) {
+													
+													final String javaBin = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";
+													
+													final ProcessBuilder builder = new ProcessBuilder(javaBin, "-jar", "temp" + File.separator + "LMMupdate" + File.separator + "LlorxKspModManager.jar", "-u");
+													builder.start();
+													
+													System.exit(0);
+													
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		} catch (Exception e) {
+			ErrorLog.log(e);
+		}
+		if (updateFound == true) {
+			JOptionPane.showMessageDialog(null, Strings.get(Strings.ERROR_UPDATING_MANAGER), Strings.get(Strings.ERROR_TITLE), JOptionPane.PLAIN_MESSAGE);
+		}
+	}
+	
 	public static void main(String[] ar) {
 		Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
 			public void uncaughtException(Thread t, Throwable e) {
@@ -1514,7 +1612,7 @@ public class Main extends JFrame implements ActionListener {
 					} catch (Exception e) {
 						erros++;
 						if (erros > 20) {
-							JOptionPane.showMessageDialog(null, "Error updating. Download LMM manually.", "Error", JOptionPane.PLAIN_MESSAGE);
+							JOptionPane.showMessageDialog(null, Strings.get(Strings.ERROR_UPDATING_MANAGER), Strings.get(Strings.ERROR_TITLE), JOptionPane.PLAIN_MESSAGE);
 							System.exit(0);
 						}
 						Thread.sleep(500);
@@ -1534,21 +1632,21 @@ public class Main extends JFrame implements ActionListener {
 			System.exit(0);
 		} else {
 			if (ar.length > 0 && ar[0].equals("-u2")) {
-				JOptionPane.showMessageDialog(null, "Update done. Changelog:\n - Now mods will be uninstalled when installing a new file and not before downloading.\n - Minor fixes", "Done!", JOptionPane.PLAIN_MESSAGE);
+				JOptionPane.showMessageDialog(null, "Update done. Changelog:\n - THIS VERSION BREAKS SAVEFILE\n - Added languages\n - Reedited GUI and added resizable main window", "Done!", JOptionPane.PLAIN_MESSAGE);
 			}
 			CookieHandler.setDefault( new CookieManager( null, CookiePolicy.ACCEPT_ALL ) );
 			if ((new File("temp")).exists()) {
 				DirIO.clearDir("temp");
 			}
 			Main window=new Main();
-			window.setSize(500,500);
-			window.setResizable(false);
+			window.setSize(ManagerConfig.mainWindowWidth, ManagerConfig.mainWindowHeight);
+			window.setResizable(true);
 			window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 			window.setVisible(true);
-
+			
 			window.setLocationRelativeTo(null);
 			
-			window.loadConfigFile();
+			window.checkVersion();
 		}
 	}
 }

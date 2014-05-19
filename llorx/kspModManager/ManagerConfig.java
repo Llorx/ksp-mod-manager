@@ -1,7 +1,7 @@
 package llorx.kspModManager;
 
-import java.io.Serializable;
-import java.io.File;
+import java.io.Externalizable;
+import java.io.*;
 
 import javax.swing.JSeparator;
 import javax.swing.JPanel;
@@ -11,11 +11,14 @@ import javax.swing.BoxLayout;
 import javax.swing.JOptionPane;
 import javax.swing.JFileChooser;
 import javax.swing.JCheckBox;
+import javax.swing.JRadioButton;
+import javax.swing.ButtonGroup;
 
 import javax.swing.border.EmptyBorder;
 
 import java.awt.Font;
 import java.awt.Dimension;
+import java.awt.GridLayout;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -26,47 +29,117 @@ import org.jsoup.nodes.Element;
 import java.lang.ProcessBuilder;
 
 import java.util.ArrayList;
+import javax.swing.ImageIcon;
 
-public class ManagerConfig implements Serializable {
-	static final long serialVersionUID = -1060044609638745786L;
+public class ManagerConfig implements Externalizable {
+	static final long serialVersionUID = 0;
 	
-	public String kspDataFolder = "";
-	public String moduleManagerLink = "http://forum.kerbalspaceprogram.com/threads/55219";
-	public transient String defaultModuleManagerLink = "http://forum.kerbalspaceprogram.com/threads/55219";
-	public boolean excludeUnneededFiles = true;
-	public boolean excludeModuleManagerDll = true;
+	public static String kspDataFolder = "";
+	public static String moduleManagerLink = "http://forum.kerbalspaceprogram.com/threads/55219";
+	public static transient String defaultModuleManagerLink = "http://forum.kerbalspaceprogram.com/threads/55219";
+	public static boolean excludeUnneededFiles = true;
+	public static boolean excludeModuleManagerDll = true;
+	public static int locale = -1;
+	public static int mainWindowWidth = 500;
+	public static int mainWindowHeight = 500;
 	
-	private transient JCheckBox excludeFilesCheck;
-	private transient JCheckBox excludeMmCheck;
+	public static transient boolean localeSelected = false;
+	private static transient JCheckBox excludeFilesCheck;
+	private static transient JCheckBox excludeMmCheck;
 	
-	public transient Main main;
-	
-	public ManagerConfig(Main main) {
-		this.main = main;
+	@Override
+	public void writeExternal(ObjectOutput out) {
+		try {
+			out.writeObject(ManagerConfig.kspDataFolder);
+			out.writeObject(ManagerConfig.moduleManagerLink);
+			out.writeBoolean(ManagerConfig.excludeUnneededFiles);
+			out.writeBoolean(ManagerConfig.excludeModuleManagerDll);
+			if (ManagerConfig.localeSelected == false) {
+				out.writeInt(-1);
+			} else {
+				out.writeInt(ManagerConfig.locale);
+			}
+			out.writeInt(mainWindowWidth);
+			out.writeInt(mainWindowHeight);
+		} catch (Exception e) {
+		}
+	}
+
+	@Override
+	public void readExternal(ObjectInput in) {
+		try {
+			ManagerConfig.kspDataFolder = (String)in.readObject();
+			ManagerConfig.moduleManagerLink = (String)in.readObject();
+			ManagerConfig.excludeUnneededFiles = in.readBoolean();
+			ManagerConfig.excludeModuleManagerDll = in.readBoolean();
+			ManagerConfig.locale = in.readInt();
+			ManagerConfig.mainWindowWidth = in.readInt();
+			ManagerConfig.mainWindowHeight = in.readInt();
+		} catch (Exception e) {
+		}
 	}
 	
-	private JPanel getPanel() {
+	private static void selectLanguage() {
 		JPanel panel = new JPanel();
 		panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
 		
-		JLabel titleTxt = new JLabel("KSP Mod Manager config");
+		ButtonGroup group = new ButtonGroup();
+		
+		for (int i = 0; i < Strings.localeNames.length; i++) {
+			JRadioButton b = new JRadioButton(Strings.localeNames[i]);
+			b.setActionCommand(String.valueOf(i));
+			panel.add(b);
+			group.add(b);
+			if (ManagerConfig.locale == i) {
+				group.setSelected(b.getModel(), true);
+			}
+		}
+		
+		panel.add(new JSeparator(JSeparator.HORIZONTAL));
+		
+		JLabel bottom = new JLabel(Strings.get(Strings.CUSTOM_LANGUAGE_INSTRUCTIONS));
+		panel.add(bottom);
+		
+		JOptionPane.showMessageDialog(null, panel, Strings.get(Strings.SELECT_LANGUAGE_TITLE), JOptionPane.PLAIN_MESSAGE);
+		
+		if (ManagerConfig.locale != Integer.parseInt(group.getSelection().getActionCommand())) {
+			ManagerConfig.locale = Integer.parseInt(group.getSelection().getActionCommand());
+			ManagerConfig.localeSelected = true;
+			JOptionPane.showMessageDialog(null, Strings.get(Strings.LANGUAGE_CHANGED_WARN), Strings.get(Strings.SELECT_LANGUAGE_TITLE), JOptionPane.PLAIN_MESSAGE);
+		}
+	}
+	
+	private static JPanel getPanel() {
+		JPanel panel = new JPanel(new GridLayout(11,1));
+		
+		JLabel titleTxt = new JLabel(Strings.get(Strings.CONFIG_MANAGER_TITLE));
 		Font font = titleTxt.getFont().deriveFont(titleTxt.getFont().getSize2D()+5.0f);
 		titleTxt.setFont(font);
 		panel.add(titleTxt);
 		
 		panel.add(new JSeparator(JSeparator.HORIZONTAL));
 		
-		JButton changeKspDataBut = new JButton("Change KSP installation folder");
+		ImageIcon lang = new ImageIcon(ManagerConfig.class.getResource("/images/lang.png"));
+		JButton changeLanguage = new JButton(Strings.get(Strings.CHANGE_LANGUAGE));
+		changeLanguage.setIcon(lang);
+		changeLanguage.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				ManagerConfig.selectLanguage();
+			}
+		});
+		panel.add(changeLanguage);
+		
+		JButton changeKspDataBut = new JButton(Strings.get(Strings.CHANGE_KSP_FOLDER));
 		changeKspDataBut.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				selectKspFolder();
+				ManagerConfig.selectKspFolder();
 			}
 		});
-		changeKspDataBut.setMaximumSize(new Dimension(300, 30));
 		panel.add(changeKspDataBut);
 		
-		JButton changeMmLinkBut = new JButton("Change Module Manager download link");
+		JButton changeMmLinkBut = new JButton(Strings.get(Strings.CHANGE_MM_LINK));
 		changeMmLinkBut.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -74,48 +147,46 @@ public class ManagerConfig implements Serializable {
 				String newUrl;
 				do {
 					newMm = null;
-					newUrl = JOptionPane.showInputDialog(null, "Paste the URL to download Module Manager dll", moduleManagerLink);
+					newUrl = JOptionPane.showInputDialog(null, Strings.get(Strings.CHANGE_MM_LINK_TEXT), ManagerConfig.moduleManagerLink);
 					if (newUrl != null && newUrl.length() > 0) {
 						newMm = new Mod("Module Manager dll", newUrl, true);
 						if (!newMm.isValid) {
-							main.alertBox(null, "That URL was not valid.");
+							JOptionPane.showMessageDialog(null, Strings.get(Strings.URL_NOT_VALID), Strings.get(Strings.ERROR_TITLE), JOptionPane.PLAIN_MESSAGE);
 						}
 					}
 				} while ((newMm != null && !newMm.isValid));
 				if (newMm != null && newMm.isValid) {
-					moduleManagerLink = newUrl;
-					main.alertBox(null, "URL updated.");
+					ManagerConfig.moduleManagerLink = newUrl;
+					JOptionPane.showMessageDialog(null, Strings.get(Strings.URL_UPDATED), Strings.get(Strings.UPDATED_TITLE), JOptionPane.PLAIN_MESSAGE);
 				}
 			}
 		});
-		changeMmLinkBut.setMaximumSize(new Dimension(300, 30));
 		panel.add(changeMmLinkBut);
 		
-		JButton restoreMmLinkBut = new JButton("Restore Module Manager download link");
+		JButton restoreMmLinkBut = new JButton(Strings.get(Strings.RESTORE_MM_LINK));
 		restoreMmLinkBut.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				moduleManagerLink = defaultModuleManagerLink;
-				main.alertBox(null, "URL restored.");
+				ManagerConfig.moduleManagerLink = ManagerConfig.defaultModuleManagerLink;
+				JOptionPane.showMessageDialog(null, Strings.get(Strings.URL_RESTORED), Strings.get(Strings.UPDATED_TITLE), JOptionPane.PLAIN_MESSAGE);
 			}
 		});
-		restoreMmLinkBut.setMaximumSize(new Dimension(300, 30));
 		panel.add(restoreMmLinkBut);
 		
 		
-		excludeFilesCheck = new JCheckBox("Exclude unneeded files (Sources, Readmes, etc...)");
-		excludeFilesCheck.setSelected(excludeUnneededFiles);
+		excludeFilesCheck = new JCheckBox(Strings.get(Strings.EXCLUDE_FILES));
+		excludeFilesCheck.setSelected(ManagerConfig.excludeUnneededFiles);
 		excludeFilesCheck.setBorder(new EmptyBorder(5, 0, 5, 0));
 		panel.add(excludeFilesCheck);
 		
 		panel.add(new JSeparator(JSeparator.HORIZONTAL));
 		
-		JLabel warnText = new JLabel("Only change this if you know what you are doing:");
+		JLabel warnText = new JLabel(Strings.get(Strings.CONFIG_WARNING));
 		warnText.setBorder(new EmptyBorder(5, 0, 0, 0));
 		panel.add(warnText);
 		
-		excludeMmCheck = new JCheckBox("Exclude Module Manager dll's from other mods");
-		excludeMmCheck.setSelected(excludeModuleManagerDll);
+		excludeMmCheck = new JCheckBox(Strings.get(Strings.EXCLUDE_MM));
+		excludeMmCheck.setSelected(ManagerConfig.excludeModuleManagerDll);
 		excludeMmCheck.setBorder(new EmptyBorder(0, 0, 5, 0));
 		panel.add(excludeMmCheck);
 		
@@ -124,19 +195,19 @@ public class ManagerConfig implements Serializable {
 		return panel;
 	}
 	
-	private boolean askForKspFolder() {
+	private static boolean askForKspFolder() {
 		try {
 			JFileChooser j = new JFileChooser();
 			j.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-			int opt = j.showSaveDialog(main);
+			int opt = j.showSaveDialog(null);
 			if (opt == JFileChooser.APPROVE_OPTION) {
 				String path = j.getSelectedFile().getCanonicalPath() + File.separator + "GameData";
 				File f = new File(path);
 				if (f.exists() && f.isDirectory()) {
-					kspDataFolder = f.getCanonicalPath();
+					ManagerConfig.kspDataFolder = f.getCanonicalPath();
 					return true;
 				} else {
-					main.alertBox(null, "This does not seems a KSP main installation folder.");
+					JOptionPane.showMessageDialog(null, Strings.get(Strings.KSP_FOLDER_ERROR), Strings.get(Strings.ERROR_TITLE), JOptionPane.PLAIN_MESSAGE);
 				}
 			}
 		} catch (Exception ex) {
@@ -145,12 +216,12 @@ public class ManagerConfig implements Serializable {
 		return false;
 	}
 	
-	public boolean selectKspFolder() {
+	public static boolean selectKspFolder() {
 		boolean ok = false;
 		do {
-			int reply = JOptionPane.showConfirmDialog(null, "Please, select your KSP main installation folder.", "KSP main folder", JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE);
+			int reply = JOptionPane.showConfirmDialog(null, Strings.get(Strings.SELECT_KSP_FOLDER), Strings.get(Strings.SELECT_KSP_FOLDER_TITLE), JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE);
 			if (reply == JOptionPane.OK_OPTION) {
-				ok = askForKspFolder();
+				ok = ManagerConfig.askForKspFolder();
 			} else {
 				return false;
 			}
@@ -158,70 +229,9 @@ public class ManagerConfig implements Serializable {
 		return true;
 	}
 	
-	public void change() {
-		JOptionPane.showMessageDialog(null, getPanel(), "Config", JOptionPane.PLAIN_MESSAGE);
-		this.excludeUnneededFiles = excludeFilesCheck.isSelected();
-		this.excludeModuleManagerDll = excludeMmCheck.isSelected();
-	}
-	
-	public void checkVersion() {
-		boolean updateFound = false;
-		String LMMversion = "v0.1.7.10alpha";
-		try {
-			Document doc = Http.get("http://forum.kerbalspaceprogram.com/threads/78861").parse();
-			Element title = doc.select("span[class=threadtitle]").first();
-			if (title != null) {
-				String v = title.text();
-				int index = v.lastIndexOf("-");
-				if (index > -1) {
-					v = v.substring(index+1).trim();
-					if (!LMMversion.equals(v)) {
-						int reply = JOptionPane.showConfirmDialog(null, "New update found. Install it now?", "New update", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
-						if (reply == JOptionPane.YES_OPTION) {
-							JOptionPane.showMessageDialog(null, "Updating... do not touch anything", "Updating", JOptionPane.PLAIN_MESSAGE);
-							updateFound = true;
-							Element posts = doc.select("ol[id=posts]").first();
-							if (posts != null) {
-								Element post = posts.select("li[id^=post_]").first();
-								if (post != null) {
-									Element linkEl = post.select("a[href*=.zip]").first();
-									if (linkEl != null) {
-										String link = linkEl.attr("href");
-										if (link.length() > 0) {
-											String filename = main.downloadFile(link, null);
-											if (filename != null) {
-												File f = new File("temp" + File.separator + filename);
-												boolean error = false;
-												try {
-													Zip.extract("temp" + File.separator + filename, "temp" + File.separator + "LMMupdate");
-												} catch (Exception e) {
-													ErrorLog.log(e);
-													error = true;
-												}
-												if (error == false) {
-													
-													final String javaBin = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";
-													
-													final ProcessBuilder builder = new ProcessBuilder(javaBin, "-jar", "temp" + File.separator + "LMMupdate" + File.separator + "LlorxKspModManager.jar", "-u");
-													builder.start();
-													
-													System.exit(0);
-													
-												}
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		} catch (Exception e) {
-			ErrorLog.log(e);
-		}
-		if (updateFound == true) {
-			JOptionPane.showMessageDialog(null, "Error updating. Download LMM manually.", "Error", JOptionPane.PLAIN_MESSAGE);
-		}
+	public static void change() {
+		JOptionPane.showMessageDialog(null, ManagerConfig.getPanel(), "Config", JOptionPane.PLAIN_MESSAGE);
+		ManagerConfig.excludeUnneededFiles = excludeFilesCheck.isSelected();
+		ManagerConfig.excludeModuleManagerDll = excludeMmCheck.isSelected();
 	}
 }

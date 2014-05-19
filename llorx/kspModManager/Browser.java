@@ -91,7 +91,7 @@ public class Browser {
 		LineBorder line = new LineBorder(Color.darkGray, 1);
 		loading.setBorder(line);
 		
-		final JButton jButton = new JButton("<< Back");
+		final JButton jButton = new JButton("<< " + Strings.get(Strings.ERROR_UPDATING_MANAGER));
 		dialog.add(jButton);
 		jButton.setSize(new Dimension(100, 27));
 		jButton.addActionListener(new ActionListener() {
@@ -151,7 +151,7 @@ public class Browser {
 				Matcher matcher = pattern.matcher(link);
 				if (matcher.find()) {
 					link = matcher.group(0);
-					int reply = JOptionPane.showConfirmDialog(null, "Detected a "+name+" link\nDo you want to check version updates directly from there in the future?", "Detected link", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+					int reply = JOptionPane.showConfirmDialog(null, Strings.get(Strings.LINK_DETECTED_ASK).replace("%SERVERNAME%", name), Strings.get(Strings.LINK_DETECTED_TITLE), JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
 					if (reply == JOptionPane.YES_OPTION) {
 						modReloaded = true;
 						mod.reloadMod(link);
@@ -204,7 +204,7 @@ public class Browser {
 						int fileType = Http.fileType(lastClick);
 						if (modReloaded == false && fileType != Http.HTML) {
 							if (fileType == Http.ZIP_EXTENSION) {
-								int reply = JOptionPane.showConfirmDialog(null, "Selected:\n" + lastClick + "\nAre you sure?", "Sure?", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+								int reply = JOptionPane.showConfirmDialog(null, Strings.get(Strings.LINK_SELECTED_ASK).replace("%LINKCLICKED%", lastClick), Strings.get(Strings.SURE_ASK), JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
 								if (reply == JOptionPane.YES_OPTION) {
 									downloadFile = lastClick;
 									Platform.runLater(new Runnable() {
@@ -220,7 +220,7 @@ public class Browser {
 									});
 								}
 							} else {
-								JOptionPane.showMessageDialog(null, "This file is not a zip file. Not supported by Mod Manager right now. Select another one.", "File not supported", JOptionPane.PLAIN_MESSAGE);
+								JOptionPane.showMessageDialog(null, Strings.get(Strings.FILE_NOT_SUPPORTED), Strings.get(Strings.FILE_NOT_SUPPORTED_TITLE), JOptionPane.PLAIN_MESSAGE);
 							}
 						}
 					} catch (Exception e) {
