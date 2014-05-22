@@ -52,8 +52,14 @@ public class Http {
 						if (index > -1) {
 							String ex = link.substring(index);
 							index = ex.lastIndexOf("?");
+							int index2 = ex.lastIndexOf("#");
 							if (index > -1) {
+								if (index2 > -1 && index2 < index) {
+									index = index2;
+								}
 								ex = link.substring(0, index);
+							} else if (index2 > -1) {
+								ex = link.substring(0, index2);
 							}
 							if (ex.toLowerCase().equals(".zip")) {
 								return Http.ZIP_EXTENSION;
@@ -122,6 +128,8 @@ public class Http {
 							return dlink;
 						}
 					}
+				} else if (link.indexOf("cubby.com/pli/") > -1) {
+					return link.replace("/pli/", "/pl/");
 				}
 			} catch (Exception e) {
 			}

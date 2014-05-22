@@ -91,7 +91,7 @@ public class Browser {
 		LineBorder line = new LineBorder(Color.darkGray, 1);
 		loading.setBorder(line);
 		
-		final JButton jButton = new JButton("<< " + Strings.get(Strings.ERROR_UPDATING_MANAGER));
+		final JButton jButton = new JButton("<< " + Strings.get(Strings.BROWSER_BACK));
 		dialog.add(jButton);
 		jButton.setSize(new Dimension(100, 27));
 		jButton.addActionListener(new ActionListener() {

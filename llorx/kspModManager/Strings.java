@@ -99,6 +99,7 @@ public class Strings {
 	public static int LANGUAGE_CHANGED_WARN = 95;
 	public static int CONFIG_BUTTON = 96;
 	public static int CUSTOM_LANGUAGE_INSTRUCTIONS = 97;
+	public static int MENU_STOP = 98;
 	
 	public static String[] locales = {"en", "es"};
 	public static String[] localeNames = {"English", "Spanish"};
@@ -209,7 +210,7 @@ public class Strings {
 			"Language has changed. Restart the app so changes take effect completely.", // Strings.LANGUAGE_CHANGED_WARN
 			"Configuration", // Strings.CONFIG_BUTTON
 			"If you want to add your language, follow instructions in the KSP forum thread", // Strings.CUSTOM_LANGUAGE_INSTRUCTIONS
-			
+			"Stop download", // Strings.MENU_STOP
 			
 	/* STOP EDITING HERE. SEND IT TO ME :P */
 			
@@ -313,6 +314,7 @@ public class Strings {
 			"Has cambiado el idioma. Reinicia la aplicación para que tenga efecto completamente.", // Strings.LANGUAGE_CHANGED_WARN
 			"Configuración", // Strings.CONFIG_BUTTON
 			"Si quieres añadir tu idioma, sigue las instrucciones en el post en los foros del KSP", // Strings.CUSTOM_LANGUAGE_INSTRUCTIONS
+			"Parar descarga", // Strings.MENU_STOP
 		},
 	};
 	

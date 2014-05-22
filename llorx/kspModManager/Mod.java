@@ -53,6 +53,8 @@ public class Mod implements Serializable {
 	public transient boolean nameChanged = false;
 	public transient boolean justUpdated = false;
 	public transient boolean errorUpdate = false;
+	private transient boolean working = false;
+	public transient boolean stopWork = false;
 	
 	// Gets
 	public UUID getUniqueId() {
@@ -199,6 +201,40 @@ public class Mod implements Serializable {
 		String oldVersion = this.getVersion();
 		this.reloadMod(this.getLink());
 		return !oldVersion.equals(this.getVersion());
+	}
+	
+	public void setWork(boolean work, Object lock) {
+		synchronized(lock) {
+			this.working = work;
+			if (this.working == false) {
+				lock.notify();
+			}
+		}
+	}
+	public boolean getWork() {
+		return this.working;
+	}
+	
+	public boolean continueWork(Object lock) {
+		synchronized(lock) {
+			if (this.stopWork == true) {
+				lock.notify();
+				return false;
+			}
+			return true;
+		}
+	}
+	public void stopWork(Object lock) {
+		synchronized(lock) {
+			this.stopWork = true;
+			while (this.working == true) {
+				try {
+					lock.wait();
+				} catch (InterruptedException e) {
+				}
+			}
+			this.stopWork = false;
+		}
 	}
 	public void reloadMod(String link) {
 		this.reloadMod(this.getName(), link, this.isInstallable());

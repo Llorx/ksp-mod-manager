@@ -427,7 +427,7 @@ public class ModDataParser {
 					if (posts != null) {
 						Element post = posts.select("li[id^=post_]").first();
 						if (post != null) {
-							links = post.select("a[href*=.zip],a[href*=mediafire.com/]");
+							links = post.select("a[href*=.zip],a[href*=mediafire.com/],a[href*=cubby.com/]");
 						}
 					}
 					break;
@@ -472,14 +472,14 @@ public class ModDataParser {
 						group.setSelected(b.getModel(), true);
 					}
 				}
-				int reply = JOptionPane.showOptionDialog(null, panel, Strings.get(Strings.INSTALL_FILE_TITLE), JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE, null, new String[]{Strings.get(Strings.DOWNLOAD_SELECTED_BUTTON), Strings.get(Strings.DOWNLOAD_SELECTED_BUTTON)}, null);
+				int reply = JOptionPane.showOptionDialog(null, panel, Strings.get(Strings.INSTALL_FILE_TITLE), JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE, null, new String[]{Strings.get(Strings.DOWNLOAD_SELECTED_BUTTON), Strings.get(Strings.OPEN_BROWSER_DOWNLOAD)}, null);
 				if (reply == JOptionPane.YES_OPTION) {
 					downloadLink = group.getSelection().getActionCommand();
 				} else {
 					browser.show(mod.getLink(), mod);
 				}
 			} else {
-				JOptionPane.showOptionDialog(null, panel, Strings.get(Strings.INSTALL_FILE_TITLE), JOptionPane.OK_OPTION, JOptionPane.PLAIN_MESSAGE, null, new String[]{Strings.get(Strings.DOWNLOAD_SELECTED_BUTTON)}, null);
+				JOptionPane.showOptionDialog(null, panel, Strings.get(Strings.INSTALL_FILE_TITLE), JOptionPane.OK_OPTION, JOptionPane.PLAIN_MESSAGE, null, new String[]{Strings.get(Strings.OPEN_BROWSER_DOWNLOAD)}, null);
 				browser.show(mod.getLink(), mod);
 			}
 			if (!browser.downloadFile.equals("")) {

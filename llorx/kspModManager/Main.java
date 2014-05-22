@@ -373,22 +373,34 @@ public class Main extends JFrame implements ActionListener {
 		}
 	}
 	
+	void stopSelectedMod() {
+		synchronized(lock) {
+			Mod mod = getSelectedMod();
+			if (mod != null) {
+				mod.stopWork(lock);
+			}
+		}
+	}
+	
 	void removeSelectedMod() {
 		synchronized(lock) {
 			Mod mod = getSelectedMod();
-			if (mod != null && mod.getStatus().equals("")) {
+			if (mod != null) {
+				mod.stopWork(lock);
 				int reply;
-				if (mod.isInstallable() == false) {
+				if (mod.isInstallable() == false || mod.isSaved() == false) {
 					reply = JOptionPane.showConfirmDialog(null, Strings.get(Strings.DELETE_SURE), Strings.get(Strings.DELETE_MOD_TITLE), JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
 				} else {
 					reply = JOptionPane.showOptionDialog(null, Strings.get(Strings.DELETE_MOD_COMPLETELY_ASK), Strings.get(Strings.DELETE_MOD_TITLE), JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, new String[]{Strings.get(Strings.DELETE_COMPLETELY_BUTTON), Strings.get(Strings.KEEP_VERSION_BUTTON), Strings.get(Strings.CANCEL_BUTTON)}, null);
 				}
-				if (reply == JOptionPane.YES_OPTION || (mod.isInstallable() && reply == JOptionPane.NO_OPTION)) {
+				if (reply == JOptionPane.YES_OPTION || (mod.isInstallable() && mod.isSaved() && reply == JOptionPane.NO_OPTION)) {
 					uninstallMod(mod);
 					if (reply == JOptionPane.YES_OPTION) {
 						removeMod(mod);
 					} else {
 						mod.setInstallable(false);
+						mod.setStatus("");
+						setMod(mod);
 						listUpdate(mainList.getSelectedRow());
 					}
 					saveConfigFile();
@@ -424,7 +436,29 @@ public class Main extends JFrame implements ActionListener {
 		uninstallMod(mod, true);
 	}
 	
+	void removeFromQueues(Mod mod) {
+		for (int i = 0; i < modInstallQeue.size(); i++) {
+			if (modInstallQeue.get(i).getId().equals(mod.getId())) {
+				modInstallQeue.remove(i);
+				break;
+			}
+		}
+		for (int i = 0; i < modQeue.size(); i++) {
+			if (modQeue.get(i).getId().equals(mod.getId())) {
+				modQeue.remove(i);
+				break;
+			}
+		}
+		if (modInstallQeue.size() == 0) {
+			installBut.setEnabled(false);
+		}
+	}
+	
 	void uninstallMod(Mod mod, boolean alerts) {
+		removeFromQueues(mod);
+		if (mod.downloadedFile.length() > 0) {
+			DirIO.clearDir(mod.downloadedFile);
+		}
 		if (mod.isInstallable() == false) {
 			return;
 		}
@@ -574,9 +608,11 @@ public class Main extends JFrame implements ActionListener {
 		@Override
 		public void run() {
 			try {
+				this.mod.setWork(true, lock);
 				this.mod.setStatus(" - ["+Strings.get(Strings.DOWNLOADING)+" - 0%] -");
 				setMod(this.mod);
-				if (downloadMod(this.mod)) {
+				boolean isDownloaded = downloadMod(this.mod);
+				if (isDownloaded) {
 					this.mod.setStatus(" - ["+Strings.get(Strings.INSTALL_QUEUE)+"] -");
 					setMod(this.mod);
 					synchronized(lock) {
@@ -588,9 +624,12 @@ public class Main extends JFrame implements ActionListener {
 					mod.setStatus("");
 					setMod(mod);
 				}
+				this.mod.setWork(false, lock);
 				synchronized(lock) {
 					asyncDThread = null;
-					installBut.setEnabled(true);
+					if (isDownloaded) {
+						installBut.setEnabled(true);
+					}
 					nextDownload();
 				}
 			} catch (Exception e) {
@@ -624,10 +663,10 @@ public class Main extends JFrame implements ActionListener {
 				}
 			}
 			String filename = downloadFile(mod.getDownloadLink(), mod);
-			if (filename.length() == 0) {
-				return downloadMod(mod);
-			} else if (filename == null) {
+			if (filename == null) {
 				return false;
+			} else if (filename.length() == 0) {
+				return downloadMod(mod);
 			}
 			mod.downloadedFile = "temp" + File.separator + filename;
 			return true;
@@ -664,26 +703,41 @@ public class Main extends JFrame implements ActionListener {
 				}
 			}
 			HttpURLConnection conn = Http.getConnection(link);
+			conn.setReadTimeout(500);
 			
 			Map<String, List<String>> map = conn.getHeaderFields();
-			FileWriter f0 = new FileWriter("LatestDownloadHeaders.txt");
-			for (Map.Entry<String, List<String>> entry : map.entrySet()) {
-				f0.write(entry.getKey() + ": " + entry.getValue() + System.getProperty("line.separator"));
-			}
-			f0.close();
 			
 			if (conn == null) {
 				alertBox(null, (mod!=null?mod.getName():link) + ": " + Strings.get(Strings.ERROR_DOWNLOAD_LINK));
 				return null;
 			}
 			
-			String filename;
+			String filename = null;
 			
 			String header = conn.getHeaderField("Content-Disposition");
 			if(header != null && header.indexOf("=") != -1) {
 				filename = header.split("=")[1];
 			} else {
-				filename = "default.zip";
+				int index = link.lastIndexOf("/");
+				if (index > -1) {
+					String f = link.substring(index+1);
+					index = f.lastIndexOf("?");
+					int index2 = f.lastIndexOf("#");
+					if (index > -1) {
+						if (index2 > -1 && index2 < index) {
+							index = index2;
+						}
+						f = f.substring(0, index);
+					} else if (index2 > -1) {
+						f = f.substring(0, index2);
+					}
+					if (f.endsWith(".zip")) {
+						filename = f;
+					}
+				}
+				if (filename == null) {
+					filename = mod.getId() + ".zip";
+				}
 			}
 			int fsize = conn.getContentLength();
 			
@@ -698,24 +752,49 @@ public class Main extends JFrame implements ActionListener {
 			}
 			fout = new FileOutputStream("temp" + File.separator + filename);
 			
-			final byte data[] = new byte[512];
-			int count = 0;
+			final byte data[] = new byte[64];
 			int total = 0;
 			int lastPerc = 0;
-			while (closingApp == false && (count = in.read(data, 0, 512)) != -1) {
-				total = total + count;
-				int perc = (int)((total*100.0f)/fsize);
-				if (lastPerc != perc) {
-					lastPerc = perc;
-					if (mod != null) {
-						mod.setStatus(" - ["+Strings.get(Strings.DOWNLOADING)+" - "+lastPerc+"%] -");
-						setMod(mod);
+			
+			while (closingApp == false) {
+				int count = -1;
+				int errorCount = 0;
+				while (errorCount < 10) {
+					if (mod.continueWork(lock) == false) {
+						return null;
+					}
+					try {
+						count = in.read(data, 0, 64);
+						break;
+					} catch (Exception e) {
+						errorCount++;
 					}
 				}
-				fout.write(data, 0, count);
+				if (errorCount >= 10) {
+					alertBox(null, mod.getName() + ": " + Strings.get(Strings.ERROR_DOWNLOAD_LINK));
+					return null;
+				}
+				if (count > -1) {
+					total = total + count;
+					int perc = (int)((total*100.0f)/fsize);
+					if (lastPerc != perc) {
+						lastPerc = perc;
+						if (mod != null) {
+							mod.setStatus(" - ["+Strings.get(Strings.DOWNLOADING)+" - "+lastPerc+"%] -");
+							setMod(mod);
+						}
+					}
+					fout.write(data, 0, count);
+				} else {
+					break;
+				}
 			}
 			
-			return filename;
+			if (closingApp == true) {
+				return null;
+			} else {
+				return filename;
+			}
 		} catch (Exception e) {
 			ErrorLog.log(e);
 		} finally {
@@ -949,11 +1028,14 @@ public class Main extends JFrame implements ActionListener {
 		
 		@Override
 		public void run() {
+			this.mod.setWork(true, lock);
 			this.mod.setStatus(" - ["+Strings.get(Strings.EXTRACTING)+"] -");
 			setMod(this.mod);
 			List<String> gameDatas = new ArrayList<String>();
 			List<String> gameTxt = new ArrayList<String>();
-			int modType = Zip.getModInfo(this.mod.downloadedFile, gameDatas, gameTxt);
+			String downloadedFile = this.mod.downloadedFile;
+			this.mod.downloadedFile = "";
+			int modType = Zip.getModInfo(downloadedFile, gameDatas, gameTxt);
 			String modExtract = "temp" + File.separator + "GameData";
 			if (gameDatas.size() == 0) {
 				gameDatas.add(modExtract);
@@ -971,7 +1053,7 @@ public class Main extends JFrame implements ActionListener {
 			}
 			
 			try {
-				Zip.extract(this.mod.downloadedFile, modExtract);
+				Zip.extract(downloadedFile, modExtract);
 			} catch (Exception e) {
 				ErrorLog.log(e);
 			}
@@ -994,7 +1076,8 @@ public class Main extends JFrame implements ActionListener {
 			setMod(this.mod);
 			saveConfigFile();
 			DirIO.clearDir("temp" + File.separator + "GameData");
-			DirIO.clearDir(this.mod.downloadedFile);
+			DirIO.clearDir(downloadedFile);
+			this.mod.setWork(false, lock);
 			synchronized(lock) {
 				asyncDThread = null;
 				downloadBut.setEnabled(true);
@@ -1020,6 +1103,7 @@ public class Main extends JFrame implements ActionListener {
 			int updatedInstall = 0;
 			for (Mod mod: this.updateList) {
 				if (closingApp == false && mod.getStatus().equals("")) {
+					mod.setWork(true, lock);
 					mod.setStatus(" - ["+Strings.get(Strings.CHECKING)+"] -");
 					mod.justUpdated = false;
 					mod.errorUpdate = false;
@@ -1060,6 +1144,7 @@ public class Main extends JFrame implements ActionListener {
 						mod.setStatus("");
 						setMod(mod);
 					}
+					mod.setWork(false, lock);
 				}
 			}
 			saveConfigFile();
@@ -1096,6 +1181,8 @@ public class Main extends JFrame implements ActionListener {
 					asyncDThread = null;
 					if (modInstallQeue.size() > 0) {
 						installBut.setEnabled(true);
+					} else {
+						installBut.setEnabled(false);
 					}
 					nextDownload();
 				}
@@ -1469,6 +1556,8 @@ public class Main extends JFrame implements ActionListener {
 		JMenuItem menuItemUpdate = new JMenuItem(Strings.get(Strings.MENU_CHECK_UPDATE), new ImageIcon(getClass().getResource("/images/update.png")));
 		JMenuItem menuItemDelete = new JMenuItem(Strings.get(Strings.MENU_UNINSTALL), new ImageIcon(getClass().getResource("/images/delete.png")));
 		
+		JMenuItem menuItemStop = new JMenuItem(Strings.get(Strings.MENU_STOP), new ImageIcon(getClass().getResource("/images/stop.png")));
+		
 		JMenuItem menuItemAllDisabled = new JMenuItem(Strings.get(Strings.MENU_DISABLED));
 		
 		Mod mod;
@@ -1480,26 +1569,31 @@ public class Main extends JFrame implements ActionListener {
 				menuItemDelete.setText(Strings.get(Strings.MENU_REMOVE));
 			}
 			
-			if (asyncDThread != null) {
-				menuItemRename.setEnabled(false);
-				menuItemReinstall.setEnabled(false);
-				menuItemChangeLink.setEnabled(false);
-				menuItemUpdate.setEnabled(false);
-				menuItemDelete.setEnabled(false);
-				
-				this.add(menuItemAllDisabled);
+			if (this.mod.getWork()) {
+				this.add(menuItemOpenLink);
 				this.addSeparator();
+				this.add(menuItemStop);
+			} else {
+				if (asyncDThread != null) {
+					menuItemRename.setEnabled(false);
+					menuItemReinstall.setEnabled(false);
+					menuItemChangeLink.setEnabled(false);
+					menuItemUpdate.setEnabled(false);
+					menuItemDelete.setEnabled(false);
+					
+					this.add(menuItemAllDisabled);
+					this.addSeparator();
+				}
+				this.add(menuItemRename);
+				this.addSeparator();
+				this.add(menuItemOpenLink);
+				this.add(menuItemChangeLink);
+				this.addSeparator();
+				this.add(menuItemReinstall);
+				this.add(menuItemUpdate);
+				this.addSeparator();
+				this.add(menuItemDelete);
 			}
-			
-			this.add(menuItemRename);
-			this.addSeparator();
-			this.add(menuItemOpenLink);
-			this.add(menuItemChangeLink);
-			this.addSeparator();
-			this.add(menuItemReinstall);
-			this.add(menuItemUpdate);
-			this.addSeparator();
-			this.add(menuItemDelete);
 			
 			menuItemRename.addActionListener(this);
 			menuItemOpenLink.addActionListener(this);
@@ -1507,7 +1601,7 @@ public class Main extends JFrame implements ActionListener {
 			menuItemReinstall.addActionListener(this);
 			menuItemUpdate.addActionListener(this);
 			menuItemDelete.addActionListener(this);
-			
+			menuItemStop.addActionListener(this);
 		}
 		
 		public void actionPerformed(ActionEvent e) {
@@ -1526,13 +1620,15 @@ public class Main extends JFrame implements ActionListener {
 				updateSelectedMod();
 			} else if(e.getSource()==menuItemDelete) {
 				removeSelectedMod();
+			} else if(e.getSource()==menuItemStop) {
+				stopSelectedMod();
 			}
 		}
 	}
 	
 	public void checkVersion() {
 		boolean updateFound = false;
-		String LMMversion = "v0.1.8alpha";
+		String LMMversion = "v0.1.8.2alpha";
 		try {
 			org.jsoup.nodes.Document doc = Http.get("http://forum.kerbalspaceprogram.com/threads/78861").parse();
 			org.jsoup.nodes.Element title = doc.select("span[class=threadtitle]").first();
@@ -1632,7 +1728,7 @@ public class Main extends JFrame implements ActionListener {
 			System.exit(0);
 		} else {
 			if (ar.length > 0 && ar[0].equals("-u2")) {
-				JOptionPane.showMessageDialog(null, "Update done. Changelog:\n - THIS VERSION BREAKS SAVEFILE\n - Added languages\n - Reedited GUI and added resizable main window", "Done!", JOptionPane.PLAIN_MESSAGE);
+				JOptionPane.showMessageDialog(null, "Update done. Changelog:\n - THIS VERSION BREAKS SAVEFILE\n - Added languages\n - Reedited GUI and added resizable main window\n - Minor fixed\n - Stop download with right button\n - Cubby.com download support", "Done!", JOptionPane.PLAIN_MESSAGE);
 			}
 			CookieHandler.setDefault( new CookieManager( null, CookiePolicy.ACCEPT_ALL ) );
 			if ((new File("temp")).exists()) {
