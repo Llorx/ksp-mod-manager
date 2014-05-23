@@ -427,12 +427,12 @@ public class ModDataParser {
 					if (posts != null) {
 						Element post = posts.select("li[id^=post_]").first();
 						if (post != null) {
-							links = post.select("a[href*=.zip],a[href*=mediafire.com/],a[href*=cubby.com/]");
+							links = post.select("a[href*=.zip],a[href*=mediafire.com/],a[href*=cubby.com/],a[href*=.box.com/],a[href*=/box.com/]");
 						}
 					}
 					break;
 				default:
-					links = doc.select("a[href*=.zip],a[href*=mediafire.com/]");
+					links = doc.select("a[href*=.zip],a[href*=mediafire.com/],a[href*=cubby.com/],a[href*=.box.com/],a[href*=/box.com/]");
 					break;
 			}
 			JPanel panel = new JPanel();

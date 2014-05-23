@@ -712,38 +712,9 @@ public class Main extends JFrame implements ActionListener {
 				return null;
 			}
 			
-			String filename = null;
+			String filename = Http.parseFileHeader(conn.getHeaderField("Content-Disposition"), link, mod.getId() + ".zip");
 			
-			String header = conn.getHeaderField("Content-Disposition");
-			if(header != null && header.indexOf("=") != -1) {
-				filename = header.split("=")[1];
-			} else {
-				int index = link.lastIndexOf("/");
-				if (index > -1) {
-					String f = link.substring(index+1);
-					index = f.lastIndexOf("?");
-					int index2 = f.lastIndexOf("#");
-					if (index > -1) {
-						if (index2 > -1 && index2 < index) {
-							index = index2;
-						}
-						f = f.substring(0, index);
-					} else if (index2 > -1) {
-						f = f.substring(0, index2);
-					}
-					if (f.endsWith(".zip")) {
-						filename = f;
-					}
-				}
-				if (filename == null) {
-					filename = mod.getId() + ".zip";
-				}
-			}
 			int fsize = conn.getContentLength();
-			
-			filename = filename.replace("\\", "_");
-			filename = filename.replace("/", "_");
-			filename = filename.replace("\"", "");
 			
 			in = conn.getInputStream();
 			try {
@@ -1628,7 +1599,7 @@ public class Main extends JFrame implements ActionListener {
 	
 	public void checkVersion() {
 		boolean updateFound = false;
-		String LMMversion = "v0.1.8.2alpha";
+		String LMMversion = "v0.1.8.3alpha";
 		try {
 			org.jsoup.nodes.Document doc = Http.get("http://forum.kerbalspaceprogram.com/threads/78861").parse();
 			org.jsoup.nodes.Element title = doc.select("span[class=threadtitle]").first();

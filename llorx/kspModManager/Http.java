@@ -21,7 +21,13 @@ public class Http {
 		while(tryouts < 10) {
 			tryouts++;
 			try {
-				return Jsoup.connect(link).userAgent("LlorxKspModManager").method(Connection.Method.GET).followRedirects(true).execute();
+				Connection.Response res = Jsoup.connect(link).userAgent("Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.131 Safari/537.36").method(Connection.Method.GET).followRedirects(false).execute();
+				String newUrl = parseLocation(res.header("Location"), link);
+				if (newUrl != null) {
+					return Http.get(newUrl);
+				} else {
+					return res;
+				}
 			} catch (Exception e) {
 			}
 		}
@@ -36,13 +42,10 @@ public class Http {
 				if (type.indexOf("application/zip") > -1 || type.indexOf("application/x-zip-compressed") > -1) {
 					return Http.ZIP_EXTENSION;
 				} else {
-					String header = conn.getHeaderField("Content-Disposition");
-					if (header != null && header.indexOf("=") != -1) {
-						String filename = header.split("=")[1];
-						filename = filename.replace("\\", "_");
-						filename = filename.replace("/", "_");
-						filename = filename.replace("\"", "");
-						if (filename.lastIndexOf(".") > -1 && filename.substring(filename.lastIndexOf(".")).toLowerCase().equals(".zip")) {
+					String filename = Http.parseFileHeader(conn.getHeaderField("Content-Disposition"), link, null);
+					if (filename != null) {
+						filename.toLowerCase();
+						if (filename.endsWith(".zip")) {
 							return Http.ZIP_EXTENSION;
 						} else {
 							return Http.OTHER_EXTENSION;
@@ -75,6 +78,69 @@ public class Http {
 		return Http.HTML;
 	}
 	
+	public static String parseFileHeader(String header, String link, String def) {
+		String filename = null;
+		if (header != null && header.indexOf("=") != -1) {
+			filename = header.split("=")[1];
+			if (filename.indexOf(";") > -1) {
+				filename = header.split(";")[0];
+			}
+			int index = filename.indexOf("\"");
+			if (index > -1) {
+				int index2 = filename.indexOf("\"", index+1);
+				if (index2 > -1) {
+					filename = filename.substring(index+1, index2);
+				}
+			}
+			index = filename.indexOf("'");
+			if (index > -1) {
+				int index2 = filename.indexOf("'", index+1);
+				if (index2 > -1) {
+					filename = filename.substring(index+1, index2);
+				}
+			}
+		} else {
+			int index = link.lastIndexOf("/");
+			if (index > -1) {
+				String f = link.substring(index+1);
+				index = f.lastIndexOf("?");
+				int index2 = f.lastIndexOf("#");
+				if (index > -1) {
+					if (index2 > -1 && index2 < index) {
+						index = index2;
+					}
+					f = f.substring(0, index);
+				} else if (index2 > -1) {
+					f = f.substring(0, index2);
+				}
+				filename = f;
+			}
+		}
+		if (filename == null) {
+			filename = def;
+		}
+		filename = filename.replace("\\", "_");
+		filename = filename.replace("/", "_");
+		filename = filename.replace("\"", "");
+		filename = filename.replace("'", "");
+		return filename;
+	}
+	
+	public static String parseLocation(String newLoc, String link) {
+		if (newLoc != null) {
+			if (newLoc.startsWith("//")) {
+				newLoc = link.substring(0, link.indexOf("//")) + newLoc;
+			} else if (newLoc.indexOf("://") == -1) {
+				if (newLoc.startsWith("/")) {
+					newLoc = link.substring(0, link.indexOf("/", link.indexOf("//")+2)) + newLoc;
+				} else {
+					newLoc = link.substring(0, link.lastIndexOf("/")+1) + newLoc;
+				}
+			}
+		}
+		return newLoc;
+	}
+	
 	public static HttpURLConnection getConnection(String link) {
 		int tryouts = 0;
 		while(tryouts < 10) {
@@ -85,13 +151,10 @@ public class Http {
 				URL website = new URL(link);
 				HttpURLConnection conn = (HttpURLConnection)website.openConnection();
 				conn.setInstanceFollowRedirects(false);
-				conn.setRequestProperty("User-Agent", "LlorxKspModManager");
-				String newUrl = conn.getHeaderField("Location");
+				conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.131 Safari/537.36");
+				String newUrl = parseLocation(conn.getHeaderField("Location"), link);
 				if (newUrl != null && newUrl.length() > 0) {
-					if (newUrl.startsWith("//")) {
-						newUrl = link.substring(0, link.indexOf("//")) + newUrl;
-					}
-					return getConnection(newUrl);
+					return Http.getConnection(newUrl);
 				} else {
 					return conn;
 				}
@@ -130,6 +193,16 @@ public class Http {
 					}
 				} else if (link.indexOf("cubby.com/pli/") > -1) {
 					return link.replace("/pli/", "/pl/");
+				} else if (link.indexOf("box.com/") > -1) {
+					Element d = doc.select("ul[data-module=header-shared]").first();
+					if (d != null) {
+						String sharedName = d.attr("data-sharedname");
+						String fileId = d.attr("data-fileid");
+						if (!sharedName.equals("") && !fileId.equals("")) {
+							System.out.println(Http.parseLocation("/index.php?rm=box_download_shared_file&shared_name="+sharedName+"&file_id=f_"+fileId, link));
+							return Http.parseLocation("/index.php?rm=box_download_shared_file&shared_name="+sharedName+"&file_id=f_"+fileId, link);
+						}
+					}
 				}
 			} catch (Exception e) {
 			}
