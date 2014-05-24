@@ -712,7 +712,7 @@ public class Main extends JFrame implements ActionListener {
 				return null;
 			}
 			
-			String filename = Http.parseFileHeader(conn.getHeaderField("Content-Disposition"), link, mod.getId() + ".zip");
+			String filename = Http.parseFileHeader(conn.getHeaderField("Content-Disposition"), link, mod!=null?(mod.getId() + ".zip"):"LKMM.zip");
 			
 			int fsize = conn.getContentLength();
 			
@@ -731,7 +731,7 @@ public class Main extends JFrame implements ActionListener {
 				int count = -1;
 				int errorCount = 0;
 				while (errorCount < 10) {
-					if (mod.continueWork(lock) == false) {
+					if (closingApp == true || (mod != null && mod.continueWork(lock) == false)) {
 						return null;
 					}
 					try {
@@ -742,7 +742,7 @@ public class Main extends JFrame implements ActionListener {
 					}
 				}
 				if (errorCount >= 10) {
-					alertBox(null, mod.getName() + ": " + Strings.get(Strings.ERROR_DOWNLOAD_LINK));
+					alertBox(null, (mod!=null?mod.getName():link) + ": " + Strings.get(Strings.ERROR_DOWNLOAD_LINK));
 					return null;
 				}
 				if (count > -1) {
@@ -1599,7 +1599,7 @@ public class Main extends JFrame implements ActionListener {
 	
 	public void checkVersion() {
 		boolean updateFound = false;
-		String LMMversion = "v0.1.8.3alpha";
+		String LMMversion = "v0.1.8.4.1alpha";
 		try {
 			org.jsoup.nodes.Document doc = Http.get("http://forum.kerbalspaceprogram.com/threads/78861").parse();
 			org.jsoup.nodes.Element title = doc.select("span[class=threadtitle]").first();
@@ -1699,7 +1699,7 @@ public class Main extends JFrame implements ActionListener {
 			System.exit(0);
 		} else {
 			if (ar.length > 0 && ar[0].equals("-u2")) {
-				JOptionPane.showMessageDialog(null, "Update done. Changelog:\n - THIS VERSION BREAKS SAVEFILE\n - Added languages\n - Reedited GUI and added resizable main window\n - Minor fixed\n - Stop download with right button\n - Cubby.com download support", "Done!", JOptionPane.PLAIN_MESSAGE);
+				JOptionPane.showMessageDialog(null, "Update done. Changelog:\n - THIS VERSION BREAKS SAVEFILE\n - Added languages\n - Reedited GUI and added resizable main window\n - Minor fixes\n - Stop download with right button\n - Cubby.com download support\n - Box.com download support", "Done!", JOptionPane.PLAIN_MESSAGE);
 			}
 			CookieHandler.setDefault( new CookieManager( null, CookiePolicy.ACCEPT_ALL ) );
 			if ((new File("temp")).exists()) {
