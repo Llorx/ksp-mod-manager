@@ -701,7 +701,7 @@ public class Main extends JFrame implements ActionListener {
 						return "";
 					}
 				} else {
-					conn = Http.getConnection(link);
+					conn = Http.getConnection(dlink);
 					if (Http.fileType(conn) == Http.ZIP_EXTENSION) {
 						validLink = true;
 						link = dlink;
@@ -1089,9 +1089,6 @@ public class Main extends JFrame implements ActionListener {
 					String oldVersion = mod.getVersion();
 					Date oldDate = mod.getLastDate();
 					boolean newVersion = mod.checkVersion();
-					
-					newVersion = true;
-					
 					if (newVersion || force == true) {
 						if (newVersion) {
 							mod.justUpdated = true;
@@ -1625,7 +1622,7 @@ public class Main extends JFrame implements ActionListener {
 	
 	public void checkVersion() {
 		boolean updateFound = false;
-		String LMMversion = "v0.1.8.5alpha";
+		String LMMversion = "v0.1.8.5.2alpha";
 		try {
 			org.jsoup.nodes.Document doc = Http.get("http://forum.kerbalspaceprogram.com/threads/78861").parse();
 			org.jsoup.nodes.Element title = doc.select("span[class=threadtitle]").first();

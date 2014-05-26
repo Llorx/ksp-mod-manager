@@ -8,6 +8,8 @@ class ChangeLog {
 			"Better Changelog output when updating: Will output changes according to the previous version.",
 			"Download filename fix: No more empty downloaded files (finally...)",
 			"Bandwith/Connections optimizing: Less connections to get download files.",
+		},{
+			"Minor mediafire download fix.",
 		},
 	};
 	
