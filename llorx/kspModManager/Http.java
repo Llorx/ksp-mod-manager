@@ -6,6 +6,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
 import java.net.URL;
+import java.net.URLConnection;
 import java.net.HttpURLConnection;
 
 import java.util.Map;
@@ -35,14 +36,18 @@ public class Http {
 	}
 	
 	public static int fileType(String link) {
-		HttpURLConnection conn = Http.getConnection(link);
+		return Http.fileType(Http.getConnection(link));
+	}
+	
+	public static int fileType(URLConnection conn) {
 		if (conn != null) {
+			String link = conn.getURL().getFile();
 			String type = conn.getHeaderField("Content-Type");
 			if (type.indexOf("application/") > -1) {
 				if (type.indexOf("application/zip") > -1 || type.indexOf("application/x-zip-compressed") > -1) {
 					return Http.ZIP_EXTENSION;
 				} else {
-					String filename = Http.parseFileHeader(conn.getHeaderField("Content-Disposition"), link, null);
+					String filename = Http.parseFileHeader(conn, null);
 					if (filename != null) {
 						filename.toLowerCase();
 						if (filename.endsWith(".zip")) {
@@ -78,41 +83,39 @@ public class Http {
 		return Http.HTML;
 	}
 	
-	public static String parseFileHeader(String header, String link, String def) {
+	public static String parseFileHeader(URLConnection conn, String def) {
 		String filename = null;
+		String header = conn.getHeaderField("Content-Disposition");
 		if (header != null && header.indexOf("=") != -1) {
-			filename = header.split("=")[1];
-			if (filename.indexOf(";") > -1) {
-				filename = header.split(";")[0];
+			String f = header.split("=")[1];
+			if (f.indexOf(";") > -1) {
+				f = header.split(";")[0];
 			}
-			int index = filename.indexOf("\"");
+			int index = f.indexOf("\"");
 			if (index > -1) {
-				int index2 = filename.indexOf("\"", index+1);
+				int index2 = f.indexOf("\"", index+1);
 				if (index2 > -1) {
-					filename = filename.substring(index+1, index2);
+					f = f.substring(index+1, index2);
 				}
 			}
-			index = filename.indexOf("'");
+			index = f.indexOf("'");
 			if (index > -1) {
-				int index2 = filename.indexOf("'", index+1);
+				int index2 = f.indexOf("'", index+1);
 				if (index2 > -1) {
-					filename = filename.substring(index+1, index2);
+					f = f.substring(index+1, index2);
 				}
 			}
-		} else {
-			int index = link.lastIndexOf("/");
+			if (f.length() > 0) {
+				filename = f;
+			}
+		}
+		if (filename == null) {
+			String f = conn.getURL().getPath();
+			int index = f.lastIndexOf("/");
 			if (index > -1) {
-				String f = link.substring(index+1);
-				index = f.lastIndexOf("?");
-				int index2 = f.lastIndexOf("#");
-				if (index > -1) {
-					if (index2 > -1 && index2 < index) {
-						index = index2;
-					}
-					f = f.substring(0, index);
-				} else if (index2 > -1) {
-					f = f.substring(0, index2);
-				}
+				f = f.substring(index+1);
+			}
+			if (f.indexOf(".") > -1) {
 				filename = f;
 			}
 		}
@@ -150,6 +153,7 @@ public class Http {
 			try {
 				URL website = new URL(link);
 				HttpURLConnection conn = (HttpURLConnection)website.openConnection();
+				conn.setConnectTimeout(5000);
 				conn.setInstanceFollowRedirects(false);
 				conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.131 Safari/537.36");
 				String newUrl = parseLocation(conn.getHeaderField("Location"), link);
@@ -199,7 +203,6 @@ public class Http {
 						String sharedName = d.attr("data-sharedname");
 						String fileId = d.attr("data-fileid");
 						if (!sharedName.equals("") && !fileId.equals("")) {
-							System.out.println(Http.parseLocation("/index.php?rm=box_download_shared_file&shared_name="+sharedName+"&file_id=f_"+fileId, link));
 							return Http.parseLocation("/index.php?rm=box_download_shared_file&shared_name="+sharedName+"&file_id=f_"+fileId, link);
 						}
 					}

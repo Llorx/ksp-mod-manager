@@ -482,8 +482,8 @@ public class ModDataParser {
 				JOptionPane.showOptionDialog(null, panel, Strings.get(Strings.INSTALL_FILE_TITLE), JOptionPane.OK_OPTION, JOptionPane.PLAIN_MESSAGE, null, new String[]{Strings.get(Strings.OPEN_BROWSER_DOWNLOAD)}, null);
 				browser.show(mod.getLink(), mod);
 			}
-			if (!browser.downloadFile.equals("")) {
-				downloadLink = browser.downloadFile;
+			if (browser.downloadFile != null) {
+				downloadLink = browser.downloadFile.getURL().toExternalForm();
 			}
 			if (browser.modReloaded == true) {
 				downloadLink = getDownloadLink(mod);

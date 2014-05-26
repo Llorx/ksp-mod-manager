@@ -38,6 +38,8 @@ import java.util.regex.*;
 
 import java.util.Date;
 
+import java.net.HttpURLConnection;
+
 public class Browser {
 	WebEngine webEngine;
 	Worker webWorker;
@@ -46,7 +48,7 @@ public class Browser {
 	int height = 0;
 	
 	public String lastClick = "";
-	public String downloadFile = "";
+	public HttpURLConnection downloadFile = null;
 	public boolean modReloaded = false;
 	
 	JLabel loading;
@@ -201,12 +203,13 @@ public class Browser {
 						if (mod != null) {
 							checkLinkChange();
 						}
-						int fileType = Http.fileType(lastClick);
+						HttpURLConnection conn = Http.getConnection(lastClick);
+						int fileType = Http.fileType(conn);
 						if (modReloaded == false && fileType != Http.HTML) {
 							if (fileType == Http.ZIP_EXTENSION) {
 								int reply = JOptionPane.showConfirmDialog(null, Strings.get(Strings.LINK_SELECTED_ASK).replace("%LINKCLICKED%", lastClick), Strings.get(Strings.SURE_ASK), JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
 								if (reply == JOptionPane.YES_OPTION) {
-									downloadFile = lastClick;
+									downloadFile = conn;
 									Platform.runLater(new Runnable() {
 										@Override
 										public void run() {

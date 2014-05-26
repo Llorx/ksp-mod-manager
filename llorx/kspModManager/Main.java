@@ -182,7 +182,6 @@ public class Main extends JFrame implements ActionListener {
 	
 	public Main() {
 		loadConfigFile();
-		
 		setLayout(new BorderLayout());
 		
 		addWindowListener(new WindowAdapter() {
@@ -683,36 +682,44 @@ public class Main extends JFrame implements ActionListener {
 			if (mod != null) {
 				mod.setDownloadLink("");
 			}
-			if (Http.fileType(link) != Http.ZIP_EXTENSION) {
+			HttpURLConnection conn = Http.getConnection(link);
+			if (conn == null) {
+				alertBox(null, (mod!=null?mod.getName():link) + ": " + Strings.get(Strings.ERROR_DOWNLOAD_LINK));
+			}
+			conn.setReadTimeout(1000);
+			if (Http.fileType(conn) != Http.ZIP_EXTENSION) {
+				boolean validLink = false;
 				String dlink = Http.getDownloadLink(link);
 				if (dlink == null) {
 					Browser browser = new Browser();
 					browser.show(link, mod);
-					if (!browser.downloadFile.equals("")) {
-						dlink = browser.downloadFile;
+					if (browser.downloadFile != null) {
+						validLink = true;
+						conn = browser.downloadFile;
 					}
 					if (browser.modReloaded == true) {
 						return "";
 					}
-				}
-				if (dlink != null && Http.fileType(dlink) == Http.ZIP_EXTENSION) {
-					link = dlink;
 				} else {
+					conn = Http.getConnection(link);
+					if (Http.fileType(conn) == Http.ZIP_EXTENSION) {
+						validLink = true;
+						link = dlink;
+					}
+				}
+				if (validLink == false) {
 					alertBox(null, (mod!=null?mod.getName():link) + ": " + Strings.get(Strings.ERROR_DOWNLOAD_LINK));
 					return null;
 				}
 			}
-			HttpURLConnection conn = Http.getConnection(link);
-			conn.setReadTimeout(500);
-			
 			Map<String, List<String>> map = conn.getHeaderFields();
-			
 			if (conn == null) {
 				alertBox(null, (mod!=null?mod.getName():link) + ": " + Strings.get(Strings.ERROR_DOWNLOAD_LINK));
 				return null;
 			}
+			conn.setReadTimeout(500);
 			
-			String filename = Http.parseFileHeader(conn.getHeaderField("Content-Disposition"), link, mod!=null?(mod.getId() + ".zip"):"LKMM.zip");
+			String filename = Http.parseFileHeader(conn, mod!=null?(mod.getId() + ".zip"):"LKMM.zip");
 			
 			int fsize = conn.getContentLength();
 			
@@ -1082,6 +1089,9 @@ public class Main extends JFrame implements ActionListener {
 					String oldVersion = mod.getVersion();
 					Date oldDate = mod.getLastDate();
 					boolean newVersion = mod.checkVersion();
+					
+					newVersion = true;
+					
 					if (newVersion || force == true) {
 						if (newVersion) {
 							mod.justUpdated = true;
@@ -1363,14 +1373,20 @@ public class Main extends JFrame implements ActionListener {
 			configVersionElement.appendChild(xmlDoc.createTextNode("8"));
 			configElement.appendChild(configVersionElement);
 			
+			Element changelogVersionElement = xmlDoc.createElement("changelogVersion");
+			changelogVersionElement.appendChild(xmlDoc.createTextNode(String.valueOf(ChangeLog.getVersion())));
+			configElement.appendChild(changelogVersionElement);
+			
 			TransformerFactory transformerFactory = TransformerFactory.newInstance();
 			Transformer transformer = transformerFactory.newTransformer();
 			DOMSource source = new DOMSource(xmlDoc);
 			StreamResult result = new StreamResult(f);
 			transformer.transform(source, result);
 			
-			ManagerConfig.mainWindowWidth = this.getWidth();
-			ManagerConfig.mainWindowHeight = this.getHeight();
+			if (this.isVisible()) {
+				ManagerConfig.mainWindowWidth = this.getWidth();
+				ManagerConfig.mainWindowHeight = this.getHeight();
+			}
 			
 			FileOutputStream fos = new FileOutputStream("data" + File.separator + "ManagerConfig.object");
 			ObjectOutputStream oos = new ObjectOutputStream(fos);
@@ -1383,6 +1399,7 @@ public class Main extends JFrame implements ActionListener {
 	}
 	
 	void loadConfigFile() {
+		int changelogVersion = 0;
 		try {
 			try {
 				FileInputStream fis = new FileInputStream("data" + File.separator + "ManagerConfig.object");
@@ -1407,7 +1424,6 @@ public class Main extends JFrame implements ActionListener {
 				ManagerConfig.localeSelected = true;
 			}
 			Strings.startUp();
-			
 			File stocks = new File("data"+File.separator+"config.xml");
 			if (stocks.exists()) {
 				DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
@@ -1441,6 +1457,11 @@ public class Main extends JFrame implements ActionListener {
 					
 					if (node.getNodeType() == Node.ELEMENT_NODE) {
 						Element element = (Element) node;
+						
+						String changelogValue = getNodeValue("changelogVersion", element);
+						if (changelogValue != null) {
+							changelogVersion = Integer.parseInt(changelogValue);
+						}
 						
 						int configVersion = Integer.parseInt(getNodeValue("configVersion", element));
 						if (configVersion == 8) {
@@ -1490,7 +1511,6 @@ public class Main extends JFrame implements ActionListener {
 								}
 							}
 							listUpdate();
-							saveConfigFile();
 						}
 					}
 				}
@@ -1498,14 +1518,16 @@ public class Main extends JFrame implements ActionListener {
 		} catch (Exception ex) {
 			ErrorLog.log(ex);
 		}
+		if (ChangeLog.anyChanges(changelogVersion)) {
+			JOptionPane.showMessageDialog(null, "Changelog:" + ChangeLog.get(changelogVersion), "New version!", JOptionPane.PLAIN_MESSAGE);
+		}
 		File f = new File(ManagerConfig.kspDataFolder);
 		if (ManagerConfig.kspDataFolder.equals("") || !f.exists() || !f.isDirectory()) {
 			if (ManagerConfig.selectKspFolder() == false) {
 				System.exit(0);
-			} else {
-				saveConfigFile();
 			}
 		}
+		saveConfigFile();
 	}
 	
 	void openConfigWindow() {
@@ -1514,9 +1536,13 @@ public class Main extends JFrame implements ActionListener {
 	}
 	
 	private static String getNodeValue(String tag, Element element) {
-		NodeList nodes = element.getElementsByTagName(tag).item(0).getChildNodes();
-		Node node = (Node) nodes.item(0);
-		return node.getNodeValue();
+		try {
+			NodeList nodes = element.getElementsByTagName(tag).item(0).getChildNodes();
+			Node node = (Node) nodes.item(0);
+			return node.getNodeValue();
+		} catch (Exception e) {
+		}
+		return null;
 	}
 	
 	class MyPopMenu extends JPopupMenu implements ActionListener {
@@ -1599,7 +1625,7 @@ public class Main extends JFrame implements ActionListener {
 	
 	public void checkVersion() {
 		boolean updateFound = false;
-		String LMMversion = "v0.1.8.4.1alpha";
+		String LMMversion = "v0.1.8.5alpha";
 		try {
 			org.jsoup.nodes.Document doc = Http.get("http://forum.kerbalspaceprogram.com/threads/78861").parse();
 			org.jsoup.nodes.Element title = doc.select("span[class=threadtitle]").first();
@@ -1686,10 +1712,9 @@ public class Main extends JFrame implements ActionListener {
 					}
 				}
 				
-				
 				final String javaBin = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";
 				
-				final ProcessBuilder builder = new ProcessBuilder(javaBin, "-jar", "LlorxKspModManager.jar", "-u2");
+				final ProcessBuilder builder = new ProcessBuilder(javaBin, "-jar", "LlorxKspModManager.jar");
 				builder.start();
 				
 				System.exit(0);
@@ -1698,13 +1723,11 @@ public class Main extends JFrame implements ActionListener {
 			}
 			System.exit(0);
 		} else {
-			if (ar.length > 0 && ar[0].equals("-u2")) {
-				JOptionPane.showMessageDialog(null, "Update done. Changelog:\n - THIS VERSION BREAKS SAVEFILE\n - Added languages\n - Reedited GUI and added resizable main window\n - Minor fixes\n - Stop download with right button\n - Cubby.com download support\n - Box.com download support", "Done!", JOptionPane.PLAIN_MESSAGE);
-			}
 			CookieHandler.setDefault( new CookieManager( null, CookiePolicy.ACCEPT_ALL ) );
 			if ((new File("temp")).exists()) {
 				DirIO.clearDir("temp");
 			}
+			
 			Main window=new Main();
 			window.setSize(ManagerConfig.mainWindowWidth, ManagerConfig.mainWindowHeight);
 			window.setResizable(true);
