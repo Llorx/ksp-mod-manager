@@ -1,0 +1,14 @@
+apply plugin: 'java'
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	compile group: 'org.jsoup', name: 'jsoup', version: '1.7.2'
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '1.12'
+}
+
