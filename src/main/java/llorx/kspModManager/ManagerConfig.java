@@ -25,6 +25,8 @@ import java.awt.event.ActionListener;
 
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.ProcessBuilder;
 
@@ -32,7 +34,8 @@ import java.util.ArrayList;
 import javax.swing.ImageIcon;
 
 public class ManagerConfig implements Externalizable {
-	static final long serialVersionUID = 0;
+    private static final Logger LOGGER = LoggerFactory.getLogger(ManagerConfig.class);
+    static final long serialVersionUID = 0;
 	
 	public static String kspDataFolder = "";
 	public static String moduleManagerLink = "http://forum.kerbalspaceprogram.com/threads/55219";
@@ -211,7 +214,7 @@ public class ManagerConfig implements Externalizable {
 				}
 			}
 		} catch (Exception ex) {
-			ErrorLog.log(ex);
+			LOGGER.error("Error when trying to ask for KSP folder", ex);
 		}
 		return false;
 	}

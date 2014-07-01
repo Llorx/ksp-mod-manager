@@ -11,6 +11,8 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.jsoup.Connection.Response;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.JPanel;
 import javax.swing.JLabel;
@@ -29,7 +31,9 @@ import java.lang.Thread;
 import java.util.regex.*;
 
 public class ModDataParser {
-	public static void parseModData(Mod mod, Response res) {
+    private static Logger LOGGER = LoggerFactory.getLogger(ModDataParser.class);
+
+    public static void parseModData(Mod mod, Response res) {
 		switch(mod.getType()) {
 			case Mod.TYPE_SPACEPORT:
 				parseSpaceportData(mod, res);
@@ -490,7 +494,7 @@ public class ModDataParser {
 			}
 			return downloadLink;
 		} catch (Exception e) {
-			ErrorLog.log(e);
+			LOGGER.error("Error when trying to find download link", e);
 		}
 		return "";
 	}
