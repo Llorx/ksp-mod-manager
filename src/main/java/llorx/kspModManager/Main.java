@@ -8,15 +8,12 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 
 import java.awt.Component;
-import java.awt.Color;
 import java.awt.event.*;
 import java.awt.Font;
-import java.awt.FlowLayout;
 import java.awt.Toolkit;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
-import java.awt.Dimension;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -33,6 +30,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import llorx.kspModManager.parse.ModDataParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -40,17 +38,14 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import java.net.URL;
 import java.net.URI;
 import java.net.HttpURLConnection;
-import java.net.URLEncoder;
 
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
