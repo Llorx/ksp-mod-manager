@@ -8,15 +8,12 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 
 import java.awt.Component;
-import java.awt.Color;
 import java.awt.event.*;
 import java.awt.Font;
-import java.awt.FlowLayout;
 import java.awt.Toolkit;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
-import java.awt.Dimension;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -33,22 +30,22 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import llorx.kspModManager.parse.ModDataParser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import java.net.URL;
 import java.net.URI;
 import java.net.HttpURLConnection;
-import java.net.URLEncoder;
 
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
@@ -157,6 +154,7 @@ class IconTextCellRenderer extends DefaultTableCellRenderer {
 }
 
 public class Main extends JFrame implements ActionListener {
+    private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
 	JButton downloadBut;
 	JButton installBut;
 	
@@ -598,6 +596,7 @@ public class Main extends JFrame implements ActionListener {
 	}
 	
 	public class MyAsyncModDownload implements Runnable {
+        private final Logger LOGGER = LoggerFactory.getLogger(MyAsyncModDownload.class);
 		private Mod mod;
 
 		MyAsyncModDownload(Mod mod) {
@@ -632,7 +631,7 @@ public class Main extends JFrame implements ActionListener {
 					nextDownload();
 				}
 			} catch (Exception e) {
-				ErrorLog.log(e);
+				LOGGER.error("Error downloading mod", e);
 			}
 		}
 	}
@@ -670,7 +669,7 @@ public class Main extends JFrame implements ActionListener {
 			mod.downloadedFile = "temp" + File.separator + filename;
 			return true;
 		} catch (Exception ex) {
-			ErrorLog.log(ex);
+            LOGGER.error("Error downloading mod", ex);
 		}
 		return false;
 	}
@@ -774,21 +773,21 @@ public class Main extends JFrame implements ActionListener {
 				return filename;
 			}
 		} catch (Exception e) {
-			ErrorLog.log(e);
+            LOGGER.error("", e);
 		} finally {
 			try {
 				if (in != null) {
 					in.close();
 				}
 			} catch (Exception ex) {
-				ErrorLog.log(ex);
+                LOGGER.error("", ex);
 			}
 			try {
 				if (fout != null) {
 					fout.close();
 				}
 			} catch (Exception ex) {
-				ErrorLog.log(ex);
+                LOGGER.error("", ex);
 			}
 		}
 		return null;
@@ -915,7 +914,7 @@ public class Main extends JFrame implements ActionListener {
 							try {
 								DesktopApi.edit(file);
 							} catch(Exception ex) {
-								ErrorLog.log(ex);
+                                LOGGER.error("", ex);
 							}
 						} else {
 							JPanel readmePanel = new JPanel();
@@ -930,7 +929,7 @@ public class Main extends JFrame implements ActionListener {
 										try {
 											DesktopApi.edit(file);
 										} catch(Exception ex) {
-											ErrorLog.log(ex);
+                                            LOGGER.error("", ex);
 										}
 									}
 								});
@@ -1033,7 +1032,7 @@ public class Main extends JFrame implements ActionListener {
 			try {
 				Zip.extract(downloadedFile, modExtract);
 			} catch (Exception e) {
-				ErrorLog.log(e);
+                LOGGER.error("", e);
 			}
 			int i = 0;
 			
@@ -1391,7 +1390,7 @@ public class Main extends JFrame implements ActionListener {
 			oos.flush();
 			oos.close();
 		} catch (Exception ex) {
-			ErrorLog.log(ex);
+            LOGGER.error("", ex);
 		}
 	}
 	
@@ -1513,7 +1512,7 @@ public class Main extends JFrame implements ActionListener {
 				}
 			}
 		} catch (Exception ex) {
-			ErrorLog.log(ex);
+            LOGGER.error("", ex);
 		}
 		if (ChangeLog.anyChanges(changelogVersion)) {
 			JOptionPane.showMessageDialog(null, "Changelog:" + ChangeLog.get(changelogVersion), "New version!", JOptionPane.PLAIN_MESSAGE);
@@ -1651,7 +1650,7 @@ public class Main extends JFrame implements ActionListener {
 												try {
 													Zip.extract("temp" + File.separator + filename, "temp" + File.separator + "LMMupdate");
 												} catch (Exception e) {
-													ErrorLog.log(e);
+                                                    LOGGER.error("", e);
 													error = true;
 												}
 												if (error == false) {
@@ -1674,7 +1673,7 @@ public class Main extends JFrame implements ActionListener {
 				}
 			}
 		} catch (Exception e) {
-			ErrorLog.log(e);
+            LOGGER.error("", e);
 		}
 		if (updateFound == true) {
 			JOptionPane.showMessageDialog(null, Strings.get(Strings.ERROR_UPDATING_MANAGER), Strings.get(Strings.ERROR_TITLE), JOptionPane.PLAIN_MESSAGE);
@@ -1684,7 +1683,7 @@ public class Main extends JFrame implements ActionListener {
 	public static void main(String[] ar) {
 		Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
 			public void uncaughtException(Thread t, Throwable e) {
-				ErrorLog.log(e);
+                LOGGER.error("", e);
 			}
 		});
 		
@@ -1716,7 +1715,7 @@ public class Main extends JFrame implements ActionListener {
 				
 				System.exit(0);
 			} catch (Exception e) {
-				ErrorLog.log(e);
+                LOGGER.error("", e);
 			}
 			System.exit(0);
 		} else {
@@ -1740,6 +1739,7 @@ public class Main extends JFrame implements ActionListener {
 
 class Zip {
 	public static final int NO_MAINFOLDER = 0b00000001;
+    private static final Logger LOGGER = LoggerFactory.getLogger(Zip.class);
 	
 	public static boolean test(int flags, int mask) { return ((flags & mask) == mask); }
 	public static int set(int flags, int mask) { return (flags |= mask); }
@@ -1779,7 +1779,7 @@ class Zip {
 			zis.closeEntry();
 			zis.close();
 		} catch(Exception ex) {
-			ErrorLog.log(ex);
+            LOGGER.error("", ex);
 		}
 	}
 	
@@ -1844,7 +1844,7 @@ class Zip {
 			zis.closeEntry();
 			zis.close();
 		} catch(Exception ex) {
-			ErrorLog.log(ex);
+            LOGGER.error("", ex);
 		}
 		return type;
 	}

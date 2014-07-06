@@ -1,14 +1,13 @@
 package llorx.kspModManager;
 
 import java.io.Serializable;
-import java.io.FileWriter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.Files;
 
 import java.util.*;
 
-import org.jsoup.Jsoup;
+import llorx.kspModManager.parse.ModDataParser;
 import org.jsoup.Connection.Response;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;

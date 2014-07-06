@@ -1,5 +1,8 @@
 package llorx.kspModManager;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
@@ -15,6 +18,7 @@ Modded by Llorx
 */
 
 public class DesktopApi {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DesktopApi.class);
 
     public static boolean browse(URI uri) {
 
@@ -87,7 +91,7 @@ public class DesktopApi {
 
             return true;
         } catch (Throwable t) {
-            logErr(t);
+            LOGGER.error("", t);
             return false;
         }
     }
@@ -108,7 +112,7 @@ public class DesktopApi {
 
             return true;
         } catch (Throwable t) {
-            logErr(t);
+            LOGGER.error("", t);
             return false;
         }
     }
@@ -129,7 +133,7 @@ public class DesktopApi {
 
             return true;
         } catch (Throwable t) {
-            logErr(t);
+            LOGGER.error("", t);
             return false;
         }
     }
@@ -143,7 +147,7 @@ public class DesktopApi {
             Process p = Runtime.getRuntime().exec(parts);
             if (p == null) return false;
         } catch (IOException e) {
-            logErr(e);
+            LOGGER.error("", e);
             return false;
         }
 		return true;
@@ -164,14 +168,6 @@ public class DesktopApi {
         }
 
         return parts.toArray(new String[parts.size()]);
-    }
-
-    private static void logErr(Throwable t) {
-        ErrorLog.log(t);
-    }
-
-    private static void logErr(String msg) {
-        logErr(new Throwable(msg));
     }
 
     public static enum EnumOS {
@@ -197,7 +193,6 @@ public class DesktopApi {
 
 
     public static EnumOS getOs() {
-
         String s = System.getProperty("os.name").toLowerCase();
 
         if (s.contains("win")) {
