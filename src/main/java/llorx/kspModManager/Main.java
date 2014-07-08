@@ -1395,7 +1395,7 @@ public class Main extends JFrame implements ActionListener {
 	}
 	
 	void loadConfigFile() {
-		int changelogVersion = 0;
+		int changelogVersion = -1;
 		try {
 			try {
 				FileInputStream fis = new FileInputStream("data" + File.separator + "ManagerConfig.object");
@@ -1514,7 +1514,7 @@ public class Main extends JFrame implements ActionListener {
 		} catch (Exception ex) {
             LOGGER.error("", ex);
 		}
-		if (ChangeLog.anyChanges(changelogVersion)) {
+		if (changelogVersion > -1 && ChangeLog.anyChanges(changelogVersion)) {
 			JOptionPane.showMessageDialog(null, "Changelog:" + ChangeLog.get(changelogVersion), "New version!", JOptionPane.PLAIN_MESSAGE);
 		}
 		File f = new File(ManagerConfig.kspDataFolder);
