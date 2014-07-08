@@ -100,6 +100,8 @@ public class Strings {
 	public static int CONFIG_BUTTON = 96;
 	public static int CUSTOM_LANGUAGE_INSTRUCTIONS = 97;
 	public static int MENU_STOP = 98;
+	public static int EXPORT_LIST = 99;
+	public static int MODLIST_SAVED = 100;
 	
 	public static String[] locales = {"en", "es", "de"};
 	public static String[] localeNames = {"English", "Spanish", "German"};
@@ -211,6 +213,8 @@ public class Strings {
 			"Configuration", // Strings.CONFIG_BUTTON
 			"If you want to add your language, follow instructions in the KSP forum thread", // Strings.CUSTOM_LANGUAGE_INSTRUCTIONS
 			"Stop download", // Strings.MENU_STOP
+			"Export modlist", // Strings.EXPORT_LIST
+			"modlist.txt saved", // Strings.MODLIST_SAVED
 			
 	/* STOP EDITING HERE. SEND IT TO ME :P */
 			
@@ -315,6 +319,8 @@ public class Strings {
 			"Configuración", // Strings.CONFIG_BUTTON
 			"Si quieres añadir tu idioma, sigue las instrucciones en el post en los foros del KSP", // Strings.CUSTOM_LANGUAGE_INSTRUCTIONS
 			"Parar descarga", // Strings.MENU_STOP
+			"Exportar lista de mods", // Strings.EXPORT_LIST
+			"modlist.txt guardado.", // Strings.MODLIST_SAVED
 		},{ // DE = 2
 			"Mod Name", // Strings.MOD_NAME
 			"Letztes Datum", // Strings.LATEST_DATE
@@ -415,6 +421,8 @@ public class Strings {
 			"Konfiguration", // Strings.CONFIG_BUTTON
 			"Wenn sie ihre Sprache hinzufügen wollen, folgen sie den Instruktionen im Forum Post", // Strings.CUSTOM_LANGUAGE_INSTRUCTIONS
 			"Stoppe Download", // Strings.MENU_STOP
+			null, // Strings.EXPORT_LIST
+			null, // Strings.MODLIST_SAVED
 		}
 	};
 	
@@ -437,6 +445,9 @@ public class Strings {
 				Strings.texts[i] = list;
 			}
 			for (int ii = 0; ii < Strings.texts[i].length; ii++) {
+				if (Strings.texts[i][ii] == null) {
+					Strings.texts[i][ii] = Strings.texts[0][ii];
+				}
 				try {
 					Strings.texts[i][ii] = new String(Strings.texts[i][ii].getBytes(), "UTF-8");
 				} catch (Exception e) {

@@ -196,13 +196,7 @@ public class Browser {
 			public void changed(ObservableValue ov, State oldState, State newState) {
 				if (newState == State.SUCCEEDED || newState == State.CANCELLED || newState == State.FAILED) {
 					loading.setVisible(false);
-				} else if (newState == State.RUNNING) {
-					loading.setVisible(true);
-					dots = 0;
 					try {
-						if (mod != null) {
-							checkLinkChange();
-						}
 						HttpURLConnection conn = Http.getConnection(lastClick);
 						int fileType = Http.fileType(conn);
 						if (modReloaded == false && fileType != Http.HTML) {
@@ -228,6 +222,9 @@ public class Browser {
 						}
 					} catch (Exception e) {
 					}
+				} else if (newState == State.RUNNING) {
+					loading.setVisible(true);
+					dots = 0;
 				}
 			}
 		});
@@ -254,6 +251,13 @@ public class Browser {
 			@Override
 			public void changed(ObservableValue<? extends String> observableValue, String oldLoc, String newLoc) {
 				lastClick = newLoc;
+				loading.setVisible(true);
+				try {
+					if (mod != null) {
+						checkLinkChange();
+					}
+				} catch (Exception e) {
+				}
 			}
 		});
 		

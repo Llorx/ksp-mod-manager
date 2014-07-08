@@ -161,6 +161,7 @@ public class Main extends JFrame implements ActionListener {
 	JButton configBut;
 	
 	JButton mmButton;
+	JButton exportButton;
 	JButton updateBut;
 	
 	Document xmlDoc;
@@ -238,6 +239,12 @@ public class Main extends JFrame implements ActionListener {
 		mmButton=new JButton(Strings.get(Strings.DOWNLOAD_MM));
 		panelBottom.add(mmButton);
 		mmButton.addActionListener(this);
+		
+		panelBottom.add(Box.createHorizontalGlue());
+		
+		exportButton=new JButton(Strings.get(Strings.EXPORT_LIST));
+		panelBottom.add(exportButton);
+		exportButton.addActionListener(this);
 		
 		panelBottom.add(Box.createHorizontalGlue());
 		
@@ -419,6 +426,19 @@ public class Main extends JFrame implements ActionListener {
 				alertBox(null, Strings.get(Strings.ERROR_MM));
 			} else {
 				mod.isMM = true;
+			}
+		} else if(e.getSource()==exportButton) {
+			try {
+				FileWriter f0 = new FileWriter("modlist.txt", true);
+				String newLine = System.getProperty("line.separator");
+				for (int i = 0; i < modList.size(); i++) {
+					Mod mod = modList.get(i);
+					f0.write(mod.getName() + ": " + mod.getLink() + newLine);
+				}
+				f0.close();
+				alertBox(null, Strings.get(Strings.MODLIST_SAVED));
+			} catch (Exception ex) {
+				ErrorLog.log(ex);
 			}
 		} else if(e.getSource()==updateBut) {
 			synchronized(lock) {

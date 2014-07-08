@@ -12,6 +12,9 @@ class ChangeLog {
 			"Minor mediafire download fix.",
 		},{
 			"Added German language.",
+		},{
+			"Export modlist to .txt file to show your modlist (Import still not implemented).",
+			"Minor fixes.",
 		},
 	};
 	
