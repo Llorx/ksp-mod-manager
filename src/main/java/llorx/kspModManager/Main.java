@@ -154,7 +154,7 @@ class IconTextCellRenderer extends DefaultTableCellRenderer {
 }
 
 public class Main extends JFrame implements ActionListener {
-    //private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
 	JButton downloadBut;
 	JButton installBut;
 	

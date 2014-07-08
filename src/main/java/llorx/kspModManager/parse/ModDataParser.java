@@ -14,8 +14,8 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.jsoup.Connection.Response;
-/*import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;*/
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.JPanel;
 import javax.swing.JLabel;
@@ -27,7 +27,7 @@ import javax.swing.BoxLayout;
 import java.awt.Font;
 
 public class ModDataParser {
-    //private static Logger LOGGER = LoggerFactory.getLogger(ModDataParser.class);
+    private static Logger LOGGER = LoggerFactory.getLogger(ModDataParser.class);
 
     public static void parseModData(Mod mod, Response res) {
 		switch(mod.getType()) {
@@ -146,8 +146,7 @@ public class ModDataParser {
 			}
 			return downloadLink;
 		} catch (Exception e) {
-			//LOGGER.error("Error when trying to find download link", e);
-			ErrorLog.log(e);
+			LOGGER.error("Error when trying to find download link", e);
 		}
 		return "";
 	}
