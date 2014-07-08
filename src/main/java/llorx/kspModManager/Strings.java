@@ -101,8 +101,8 @@ public class Strings {
 	public static int CUSTOM_LANGUAGE_INSTRUCTIONS = 97;
 	public static int MENU_STOP = 98;
 	
-	public static String[] locales = {"en", "es"};
-	public static String[] localeNames = {"English", "Spanish"};
+	public static String[] locales = {"en", "es", "de"};
+	public static String[] localeNames = {"English", "Spanish", "German"};
 	public static String[][] texts = {
 		{ // EN = 0
 			
@@ -315,7 +315,107 @@ public class Strings {
 			"Configuración", // Strings.CONFIG_BUTTON
 			"Si quieres añadir tu idioma, sigue las instrucciones en el post en los foros del KSP", // Strings.CUSTOM_LANGUAGE_INSTRUCTIONS
 			"Parar descarga", // Strings.MENU_STOP
-		},
+		},{ // DE = 2
+			"Mod Name", // Strings.MOD_NAME
+			"Letztes Datum", // Strings.LATEST_DATE
+			"Neue Version installiert", // Strings.NEW_VERSION
+			"Neues Update verfügbar", // Strings.NEW_UPDATE
+			"Download fehlgeschlagen", // Strings.DOWNLOAD_ERROR
+			"Downloade Mod", // Strings.DOWNLOAD_MOD
+			"Installiere anstehende Mods", // Strings.INSTALL_QUEUED
+			"Downloade Module Manager", // Strings.DOWNLOAD_MM
+			"Prüfe Mod Updates", // Strings.CHECK_MOD_UPDATES
+			"Neuer Name?", // Strings.NEW_NAME_QUESTION
+			"Neuer Download Link?", // Strings.NEW_LINK_QUESTION
+			"Zerlegen des Link fehlgeschlagen.", // Strings.ERROR_PARSING_LINK
+			"Mod Link hat sich geändert. Wollen Sie den Mod vom neuem Link downloaden?", // Strings.LINK_CHANGED_DOWNLOAD_AGAIN
+			"Link geändert", // Strings.LINK_CHANGED_TITLE
+			"Wollen Sie den Mod von der Liste entfernen?", // Strings.DELETE_SURE
+			"Lösche Mod", // Strings.DELETE_MOD_TITLE
+			"Wollen Sie ihn komplett löschen oder nur deinstallieren und neue Versionen verfolgen?", // Strings.DELETE_MOD_COMPLETELY_ASK
+			"Lösche komplett", // Strings.DELETE_COMPLETELY_BUTTON
+			"Deinstalliere aber behalte in Liste um neue Versionen zu prüfen", // Strings.KEEP_VERSION_BUTTON
+			"Abbruch", // Strings.CANCEL_BUTTON
+			"Hinzufügen von Module Manager Mod fehlgeschlagen.", // Strings.ERROR_MM
+			"Entfernen von Mod %MODNAME% fehlgeschlagen weil die Ordner nicht leer waren:", // Strings.LOG_DIR_EMPTY
+			"Konnte einige Ordner nicht löschen da die Ordner nicht leer waren. Vielleicht ist der Mod mit einem anderen Mod verknüpft oder erstellt eine Konfigurationsdatei.\nPrüfen sie die Ordner manuell nachdem sie den Manager geschlossen haben. Sie haben eine Liste in folgender Datei: log.txt.", // Strings.LOG_DIR_EMPTY_ERROR
+			"Entfernen von Mod %MODNAME% fehlgeschlagen weil die aktuellen Dateien andere überschreiben", // Strings.LOG_OVERWRITTEN_FILES
+			"Einige Dateien konnten nicht entfernt werden weil sie andere Mod Dateien ersetzen. Sie müssen das manuell prüfen und entscheiden nachdem sie den Manager geschlossen haben ob die Dateien gelöscht werden sollen.\nSie haben eine Liste in folgender Datei: log.txt.", // Strings.LOG_OVERWRITTEN_FILES_ERROR
+			"Downloade", // Strings.DOWNLOADING
+			"Installiere anstehende", // Strings.INSTALL_QUEUE
+			"Zugriff auf temp Ordner fehlgeschlagen.", // Strings.ERROR_TEMP
+			"Download von Datei fehlgeschlagen.", // Strings.ERROR_DOWNLOAD_LINK
+			"Diese Selektion merken", // Strings.SELECTION_REMEMBER
+			"Wollen sie diese Datei überschreiben?", // Strings.OVERWRITE_ASK
+			"Neuen Mod hinzufügen", // Strings.ADD_MOD_TITLE
+			"README Datei öffnen (Hat eventuell Installationsanleitung)", // Strings.OPEN_README
+			"Readme Datei", // Strings.README_FILES_TITLE
+			"Selektieren sie die Sachen zum installieren", // Strings.MARK_INSTALL
+			"Installiere diese Dateien", // Strings.INSTALL_GAMEDATA
+			"Installation wiederholen", // Strings.INSTALL_AGAIN
+			"%NUMBER% Dateien installiert.", // Strings.INSTALLED_COUNT
+			"Entpacken...", // Strings.EXTRACTING
+			"Installation...", // Strings.INSTALLING
+			"%GDATANUMBER% GameData Ordner gefunden", // Strings.AFTERINSTALL_1
+			" und %READMENUMBER% README Dateien.", // Strings.AFTERINSTALL_2
+			"Installieren", // Strings.INSTALL_TITLE
+			"Prüfe...", // Strings.CHECKING
+			"%UPDATEDCOUNT% Mod Updates gefunden.", // Strings.UPDATED_QUANTITY
+			"Nicht installieren, nur Warnung wenn eine neue Version vorhanden.", // Strings.WARN_VERSION_CHECK
+			"Dieser Mod exestiert bereits in der Modliste unter folgendem Namen: %MODNAME%", // Strings.ALREADY_ERROR
+			"Downloade Anstehende", // Strings.DOWNLOAD_QUEUE
+			"Fehler beim finden von Mod %MODNAME%. Prüfen sie die URL.", // Strings.ERROR_MOD_URL
+			"Update der Konfiguration fehlgeschlagen. Probieren sie es in einigen Minuten nochmals.", // Strings.ERROR_UPDATING_CONFIG
+			"Umbennenen", // Strings.MENU_RENAME
+			"Öffne Mod Link im Browser", // Strings.MENU_OPEN_BROWSER
+			"Wechsle Mod Link", // Strings.MENU_CHANGE_LINK
+			"Redownload", // Strings.MENU_REDOWNLOAD
+			"Prüfe Update", // Strings.MENU_CHECK_UPDATE
+			"Deinstallieren", // Strings.MENU_UNINSTALL
+			"Deaktiviert wegen Download/Installations Operationen", // Strings.MENU_DISABLED
+			"Download", // Strings.MENU_DOWNLOAD
+			"Entfernen", // Strings.MENU_REMOVE
+			"Neues Update gefunden. Jetzt installieren?", // Strings.NEW_MANAGER_UPDATE
+			"Neues Update", // Strings.NEW_MANAGER_UPDATE_TITLE
+			"aktualisiere... do not touch anything", // Strings.UPDATING_TEXT
+			"Update", // Strings.UPDATING_TITLE
+			"Update fehlgeschlagen. Downloade LMM manuell.", // Strings.ERROR_UPDATING_MANAGER
+			"Fehler", // Strings.ERROR_TITLE
+			"Zurück", // Strings.BROWSER_BACK
+			"%SERVERNAME% link gefunden\nWollen Sie in Zukunft von dort Version Updates prüfen?", // Strings.LINK_DETECTED_ASK
+			"Link gefunden", // Strings.LINK_DETECTED_TITLE
+			"Markiert:\n%LINKCLICKED%\nSind sie sicher?", // Strings.LINK_SELECTED_ASK
+			"Sicher?", // Strings.SURE_ASK
+			"Diese Datei ist keine zip Datei. Momentan nicht unterstütztes Format. Selektieren sie eine andere Datei.", // Strings.FILE_NOT_SUPPORTED
+			"Datei nicht unterstützt", // Strings.FILE_NOT_SUPPORTED_TITLE
+			"KSP Mod Manager Konfiguration", // Strings.CONFIG_MANAGER_TITLE
+			"Wechsle KSP Installationsverzeichnis", // Strings.CHANGE_KSP_FOLDER
+			"Wechsle Module Manager Download Link", // Strings.CHANGE_MM_LINK
+			"URL einfügen um Module Manager dll zu downloaden", // Strings.CHANGE_MM_LINK_TEXT
+			"Diese URL ist nicht gültig.", // Strings.URL_NOT_VALID
+			"URL aktualisiert.", // Strings.URL_UPDATED
+			"Aktualisiert", // Strings.UPDATED_TITLE
+			"Module Manager Download Link wiederherstellen", // Strings.RESTORE_MM_LINK
+			"URL wiederhergestellt.", // Strings.URL_RESTORED
+			"Nicht notwendige Dateien ausschließen (Sources, Readmes, etc...)", // Strings.EXCLUDE_FILES
+			"Nur ändern wenn sie wissen was sie tun:", // Strings.CONFIG_WARNING
+			"Module Manager dll's verknüpft mit anderen Mods ausschließen", // Strings.EXCLUDE_MM
+			"Dies scheint kein KSP Hauptinstallationsverzeichnis zu sein.", // Strings.KSP_FOLDER_ERROR
+			"Bitte selektieren sie ihr KSP Hauptinstallationsverzeichnis aus.", // Strings.SELECT_KSP_FOLDER
+			"KSP Hauptverzeichnis", // Strings.SELECT_KSP_FOLDER_TITLE
+			"Mehrere Links gefunden. Welche Dateien wollen sie installieren?", // Strings.MULTIPLE_LINKS_ASK
+			"Datei wurde gefunden. Wollen sie sie installieren?", // Strings.ONE_LINK_DETECTED
+			"Keine Dateien gefunden. Downloaden sie manuell eine Datei von der Webseite.", // Strings.NO_LINK_DETECTED
+			"Installiere Datei", // Strings.INSTALL_FILE_TITLE
+			"Downloade markierte Dateien", // Strings.DOWNLOAD_SELECTED_BUTTON
+			"Öffne Webseite und downloade Datei von dort", // Strings.OPEN_BROWSER_DOWNLOAD
+			"Wechsle Manager Sprache", // Strings.CHANGE_LANGUAGE
+			"Wählen sie eine Sprache", // Strings.SELECT_LANGUAGE_TITLE
+			"Sprache geändert. Öffnen sie den Manager erneut um alle Änderungen vollständig zu übernehmen.", // Strings.LANGUAGE_CHANGED_WARN
+			"Konfiguration", // Strings.CONFIG_BUTTON
+			"Wenn sie ihre Sprache hinzufügen wollen, folgen sie den Instruktionen im Forum Post", // Strings.CUSTOM_LANGUAGE_INSTRUCTIONS
+			"Stoppe Download", // Strings.MENU_STOP
+		}
 	};
 	
 	public static String get(int name) {

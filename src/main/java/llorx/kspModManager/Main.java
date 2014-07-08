@@ -1626,7 +1626,7 @@ public class Main extends JFrame implements ActionListener {
 	
 	public void checkVersion() {
 		boolean updateFound = false;
-		String LMMversion = "v0.1.8.5.2alpha";
+		String LMMversion = "v0.1.8.6alpha";
 		try {
 			org.jsoup.nodes.Document doc = Http.get("http://forum.kerbalspaceprogram.com/threads/78861").parse();
 			org.jsoup.nodes.Element title = doc.select("span[class=threadtitle]").first();

@@ -10,6 +10,7 @@ import llorx.kspModManager.Browser;
 import llorx.kspModManager.Http;
 import llorx.kspModManager.Mod;
 import llorx.kspModManager.Strings;
+import llorx.kspModManager.ErrorLog;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;

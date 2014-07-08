@@ -10,6 +10,8 @@ class ChangeLog {
 			"Bandwith/Connections optimizing: Less connections to get download files.",
 		},{
 			"Minor mediafire download fix.",
+		},{
+			"Added German language.",
 		},
 	};
 	
