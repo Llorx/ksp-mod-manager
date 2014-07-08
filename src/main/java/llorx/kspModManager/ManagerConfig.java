@@ -25,8 +25,8 @@ import java.awt.event.ActionListener;
 
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+/*import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;*/
 
 import java.lang.ProcessBuilder;
 
@@ -34,7 +34,7 @@ import java.util.ArrayList;
 import javax.swing.ImageIcon;
 
 public class ManagerConfig implements Externalizable {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ManagerConfig.class);
+    //private static final Logger LOGGER = LoggerFactory.getLogger(ManagerConfig.class);
     static final long serialVersionUID = 0;
 	
 	public static String kspDataFolder = "";
@@ -214,7 +214,7 @@ public class ManagerConfig implements Externalizable {
 				}
 			}
 		} catch (Exception ex) {
-			LOGGER.error("Error when trying to ask for KSP folder", ex);
+			//LOGGER.error("Error when trying to ask for KSP folder", ex);
 		}
 		return false;
 	}

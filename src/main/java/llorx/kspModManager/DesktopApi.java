@@ -1,7 +1,7 @@
 package llorx.kspModManager;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+/*import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;*/
 
 import java.awt.Desktop;
 import java.io.File;
@@ -18,7 +18,7 @@ Modded by Llorx
 */
 
 public class DesktopApi {
-    private static final Logger LOGGER = LoggerFactory.getLogger(DesktopApi.class);
+    //private static final Logger LOGGER = LoggerFactory.getLogger(DesktopApi.class);
 
     public static boolean browse(URI uri) {
 
@@ -91,7 +91,7 @@ public class DesktopApi {
 
             return true;
         } catch (Throwable t) {
-            LOGGER.error("", t);
+            //LOGGER.error("", t);
             return false;
         }
     }
@@ -112,7 +112,7 @@ public class DesktopApi {
 
             return true;
         } catch (Throwable t) {
-            LOGGER.error("", t);
+            //LOGGER.error("", t);
             return false;
         }
     }
@@ -133,7 +133,7 @@ public class DesktopApi {
 
             return true;
         } catch (Throwable t) {
-            LOGGER.error("", t);
+            //LOGGER.error("", t);
             return false;
         }
     }
@@ -147,7 +147,8 @@ public class DesktopApi {
             Process p = Runtime.getRuntime().exec(parts);
             if (p == null) return false;
         } catch (IOException e) {
-            LOGGER.error("", e);
+            //LOGGER.error("", e);
+			ErrorLog.log(e);
             return false;
         }
 		return true;
