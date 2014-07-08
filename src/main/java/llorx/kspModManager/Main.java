@@ -31,8 +31,8 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 import llorx.kspModManager.parse.ModDataParser;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+/*import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;*/
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -154,7 +154,7 @@ class IconTextCellRenderer extends DefaultTableCellRenderer {
 }
 
 public class Main extends JFrame implements ActionListener {
-    private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
+    //private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
 	JButton downloadBut;
 	JButton installBut;
 	
@@ -473,7 +473,6 @@ public class Main extends JFrame implements ActionListener {
 				try {
 					Files.deleteIfExists(file);
 				} catch (Exception e) {
-					
 				}
 				boolean found = false;
 				for (Path ff: parents) {
@@ -483,7 +482,6 @@ public class Main extends JFrame implements ActionListener {
 							break;
 						}
 					} catch (Exception e) {
-						
 					}
 				}
 				if (found == false) {
@@ -501,7 +499,6 @@ public class Main extends JFrame implements ActionListener {
 						try {
 							Files.deleteIfExists(f);
 						}  catch (Exception ee) {
-							
 						}
 						f = f.getParent();
 					} else {
@@ -513,7 +510,6 @@ public class Main extends JFrame implements ActionListener {
 									break;
 								}
 							} catch (Exception ee) {
-								
 							}
 						}
 						if (found == false) {
@@ -568,7 +564,6 @@ public class Main extends JFrame implements ActionListener {
 					}
 					f0.close();
 				} catch (Exception e) {
-					
 				}
 				alertBox(null, Strings.get(Strings.LOG_OVERWRITTEN_FILES_ERROR));
 			}
@@ -596,7 +591,7 @@ public class Main extends JFrame implements ActionListener {
 	}
 	
 	public class MyAsyncModDownload implements Runnable {
-        private final Logger LOGGER = LoggerFactory.getLogger(MyAsyncModDownload.class);
+        //private final Logger LOGGER = LoggerFactory.getLogger(MyAsyncModDownload.class);
 		private Mod mod;
 
 		MyAsyncModDownload(Mod mod) {
@@ -631,7 +626,8 @@ public class Main extends JFrame implements ActionListener {
 					nextDownload();
 				}
 			} catch (Exception e) {
-				LOGGER.error("Error downloading mod", e);
+				//LOGGER.error("Error downloading mod", e);
+				ErrorLog.log(e);
 			}
 		}
 	}
@@ -669,7 +665,8 @@ public class Main extends JFrame implements ActionListener {
 			mod.downloadedFile = "temp" + File.separator + filename;
 			return true;
 		} catch (Exception ex) {
-            LOGGER.error("Error downloading mod", ex);
+            //LOGGER.error("Error downloading mod", ex);
+			ErrorLog.log(ex);
 		}
 		return false;
 	}
@@ -773,21 +770,24 @@ public class Main extends JFrame implements ActionListener {
 				return filename;
 			}
 		} catch (Exception e) {
-            LOGGER.error("", e);
+            //LOGGER.error("", e);
+			ErrorLog.log(e);
 		} finally {
 			try {
 				if (in != null) {
 					in.close();
 				}
 			} catch (Exception ex) {
-                LOGGER.error("", ex);
+                //LOGGER.error("", ex);
+				ErrorLog.log(ex);
 			}
 			try {
 				if (fout != null) {
 					fout.close();
 				}
 			} catch (Exception ex) {
-                LOGGER.error("", ex);
+                //LOGGER.error("", ex);
+				ErrorLog.log(ex);
 			}
 		}
 		return null;
@@ -914,7 +914,8 @@ public class Main extends JFrame implements ActionListener {
 							try {
 								DesktopApi.edit(file);
 							} catch(Exception ex) {
-                                LOGGER.error("", ex);
+                                //LOGGER.error("", ex);
+								ErrorLog.log(ex);
 							}
 						} else {
 							JPanel readmePanel = new JPanel();
@@ -929,7 +930,8 @@ public class Main extends JFrame implements ActionListener {
 										try {
 											DesktopApi.edit(file);
 										} catch(Exception ex) {
-                                            LOGGER.error("", ex);
+                                            //LOGGER.error("", ex);
+											ErrorLog.log(ex);
 										}
 									}
 								});
@@ -1032,7 +1034,8 @@ public class Main extends JFrame implements ActionListener {
 			try {
 				Zip.extract(downloadedFile, modExtract);
 			} catch (Exception e) {
-                LOGGER.error("", e);
+                //LOGGER.error("", e);
+				ErrorLog.log(e);
 			}
 			int i = 0;
 			
@@ -1390,7 +1393,8 @@ public class Main extends JFrame implements ActionListener {
 			oos.flush();
 			oos.close();
 		} catch (Exception ex) {
-            LOGGER.error("", ex);
+            //LOGGER.error("", ex);
+			ErrorLog.log(ex);
 		}
 	}
 	
@@ -1512,7 +1516,8 @@ public class Main extends JFrame implements ActionListener {
 				}
 			}
 		} catch (Exception ex) {
-            LOGGER.error("", ex);
+            //LOGGER.error("", ex);
+			ErrorLog.log(ex);
 		}
 		if (changelogVersion > -1 && ChangeLog.anyChanges(changelogVersion)) {
 			JOptionPane.showMessageDialog(null, "Changelog:" + ChangeLog.get(changelogVersion), "New version!", JOptionPane.PLAIN_MESSAGE);
@@ -1650,7 +1655,8 @@ public class Main extends JFrame implements ActionListener {
 												try {
 													Zip.extract("temp" + File.separator + filename, "temp" + File.separator + "LMMupdate");
 												} catch (Exception e) {
-                                                    LOGGER.error("", e);
+                                                    //LOGGER.error("", e);
+													ErrorLog.log(e);
 													error = true;
 												}
 												if (error == false) {
@@ -1673,7 +1679,8 @@ public class Main extends JFrame implements ActionListener {
 				}
 			}
 		} catch (Exception e) {
-            LOGGER.error("", e);
+            //LOGGER.error("", e);
+			ErrorLog.log(e);
 		}
 		if (updateFound == true) {
 			JOptionPane.showMessageDialog(null, Strings.get(Strings.ERROR_UPDATING_MANAGER), Strings.get(Strings.ERROR_TITLE), JOptionPane.PLAIN_MESSAGE);
@@ -1683,7 +1690,8 @@ public class Main extends JFrame implements ActionListener {
 	public static void main(String[] ar) {
 		Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
 			public void uncaughtException(Thread t, Throwable e) {
-                LOGGER.error("", e);
+                //LOGGER.error("", e);
+				ErrorLog.log(e);
 			}
 		});
 		
@@ -1715,7 +1723,8 @@ public class Main extends JFrame implements ActionListener {
 				
 				System.exit(0);
 			} catch (Exception e) {
-                LOGGER.error("", e);
+                //LOGGER.error("", e);
+				ErrorLog.log(e);
 			}
 			System.exit(0);
 		} else {
@@ -1739,7 +1748,7 @@ public class Main extends JFrame implements ActionListener {
 
 class Zip {
 	public static final int NO_MAINFOLDER = 0b00000001;
-    private static final Logger LOGGER = LoggerFactory.getLogger(Zip.class);
+    //private static final Logger LOGGER = LoggerFactory.getLogger(Zip.class);
 	
 	public static boolean test(int flags, int mask) { return ((flags & mask) == mask); }
 	public static int set(int flags, int mask) { return (flags |= mask); }
@@ -1779,7 +1788,8 @@ class Zip {
 			zis.closeEntry();
 			zis.close();
 		} catch(Exception ex) {
-            LOGGER.error("", ex);
+            //LOGGER.error("", ex);
+			ErrorLog.log(ex);
 		}
 	}
 	
@@ -1844,7 +1854,8 @@ class Zip {
 			zis.closeEntry();
 			zis.close();
 		} catch(Exception ex) {
-            LOGGER.error("", ex);
+            //LOGGER.error("", ex);
+			ErrorLog.log(ex);
 		}
 		return type;
 	}
