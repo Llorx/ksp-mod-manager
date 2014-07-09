@@ -1,6 +1,8 @@
 package llorx.kspModManager;
 
 import java.io.Serializable;
+import java.io.ObjectInputStream;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.Files;
@@ -54,6 +56,41 @@ public class Mod implements Serializable {
 	public transient boolean errorUpdate = false;
 	private transient boolean working = false;
 	public transient boolean stopWork = false;
+	
+	private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+		setDefaults();
+    }
+	
+	private void setDefaults() {
+		if (uniqueId == null) {
+			uniqueId = UUID.randomUUID();
+		}
+		if (id == null) {
+			id = "";
+		}
+		if (name == null) {
+			name = "";
+		}
+		if (status == null) {
+			status = "";
+		}
+		if (version == null) {
+			version = "";
+		}
+		if (installFiles == null) {
+			installFiles = new ArrayList<ModFile>();
+		}
+		if (link == null) {
+			link = "";
+		}
+		if (downloadLink == null) {
+			downloadLink = "";
+		}
+		if (downloadedFile == null) {
+			downloadedFile = "";
+		}
+	}
 	
 	// Gets
 	public UUID getUniqueId() {

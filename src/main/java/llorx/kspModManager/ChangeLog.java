@@ -14,7 +14,8 @@ class ChangeLog {
 			"Added German language.",
 		},{
 			"Export modlist to .txt file to show your modlist (Import still not implemented).",
-			"Minor fixes.",
+		},{
+			"Uninstall fix.",
 		},
 	};
 	
