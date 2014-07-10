@@ -7,7 +7,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 public class JenkinsDataParser {
-    static void parseJenkinsData(Mod mod, Connection.Response res) {
+    static void parseData(Mod mod, Connection.Response res) {
         try {
             Document doc = res.parse();
             String id = mod.getLink().replace("/lastSuccessfulBuild", "").replace("/", "_");

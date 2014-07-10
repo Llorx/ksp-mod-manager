@@ -13,7 +13,7 @@ import java.util.Locale;
 import java.util.TimeZone;
 
 public class KspForumDataParser {
-    static void parseKspForumData(Mod mod, Connection.Response res) {
+    static void parseData(Mod mod, Connection.Response res) {
         try {
             int index = mod.getLink().indexOf("-");
             if (index > -1) {

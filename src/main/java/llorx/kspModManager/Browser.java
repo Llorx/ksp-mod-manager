@@ -141,6 +141,9 @@ public class Browser {
 			"Curse",
 			"(.*)(curse.com\\/)([^\\/]*)(\\/kerbal\\/)(\\d*)([^\\/]*)"
 		},{
+			"Kerbal Space Parts",
+			"(.*)(kerbal-space-parts.com\\/space\\/)([^\\/]*)(\\.html)"
+		},{
 			"GitHub",
 			"(.*)(github.com\\/)([^\\/]*)(\\/[^\\/]*)(\\/releases)"
 		}};

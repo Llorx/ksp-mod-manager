@@ -10,7 +10,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class CurseDataParser {
-    static void parseCurseData(Mod mod, Connection.Response res) {
+    static void parseData(Mod mod, Connection.Response res) {
         try {
             Pattern pattern = Pattern.compile("(.*)(curse.com\\/)([^\\/]*)(\\/kerbal\\/)(\\d*)([^\\/]*)");
             Matcher matcher = pattern.matcher(mod.getLink());

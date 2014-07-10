@@ -7,7 +7,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
 public class GitHubDataParser {
-    static void parseGitHubData(Mod mod, Connection.Response res) {
+    static void parseData(Mod mod, Connection.Response res) {
         try {
             res = Http.get(mod.getLink());
             Document doc = res.parse();

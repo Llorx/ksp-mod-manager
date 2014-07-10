@@ -28,6 +28,7 @@ public class Mod implements Serializable {
 	public static final int TYPE_DROPBOX_FOLDER = 5;
 	public static final int TYPE_CURSEFORGE = 6;
 	public static final int TYPE_CURSE = 7;
+	public static final int TYPE_KERBAL_SPACE_PARTS = 8;
 	public static final int TYPE_LINK = 1000;
 	
 	
@@ -100,7 +101,7 @@ public class Mod implements Serializable {
 		String prefix = "";
 		switch(this.getType()) {
 			case Mod.TYPE_SPACEPORT:
-				prefix = "SpacePort";
+				prefix = "SpacePort [DEPRECATED]";
 				break;
 			case Mod.TYPE_KSPFORUM:
 				prefix = "KspForum";
@@ -122,6 +123,9 @@ public class Mod implements Serializable {
 				break;
 			case Mod.TYPE_CURSE:
 				prefix = "Curse.com";
+				break;
+			case Mod.TYPE_KERBAL_SPACE_PARTS:
+				prefix = "Kerbal Space Parts";
 				break;
 		}
 		return prefix;
@@ -300,6 +304,8 @@ public class Mod implements Serializable {
 					this.setType(Mod.TYPE_CURSEFORGE);
 				} else if (link.indexOf("curse.com/") > -1) {
 					this.setType(Mod.TYPE_CURSE);
+				} else if (link.indexOf("kerbal-space-parts.com/") > -1) {
+					this.setType(Mod.TYPE_KERBAL_SPACE_PARTS);
 				} else {
 					if (Http.fileType(link) == Http.HTML) {
 						res = Http.get(link);

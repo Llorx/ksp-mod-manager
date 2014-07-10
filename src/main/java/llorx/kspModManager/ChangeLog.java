@@ -16,6 +16,8 @@ class ChangeLog {
 			"Export modlist to .txt file to show your modlist (Import still not implemented).",
 		},{
 			"Uninstall fix.",
+		},{
+			"kerbal-space-parts.com support added.",
 		},
 	};
 	

@@ -33,28 +33,31 @@ public class ModDataParser {
     public static void parseModData(Mod mod, Response res) {
 		switch(mod.getType()) {
 			case Mod.TYPE_SPACEPORT:
-                SpaceportParser.parseSpaceportData(mod, res);
+                SpaceportParser.parseData(mod, res);
 				break;
 			case Mod.TYPE_KSPFORUM:
-                KspForumDataParser.parseKspForumData(mod, res);
+                KspForumDataParser.parseData(mod, res);
 				break;
 			case Mod.TYPE_JENKINS:
-                JenkinsDataParser.parseJenkinsData(mod, res);
+                JenkinsDataParser.parseData(mod, res);
 				break;
 			case Mod.TYPE_GITHUB:
-                GitHubDataParser.parseGitHubData(mod, res);
+                GitHubDataParser.parseData(mod, res);
 				break;
 			case Mod.TYPE_BITBUCKET:
-                BitBucketDataParser.parseBitBucketData(mod, res);
+                BitBucketDataParser.parseData(mod, res);
 				break;
 			case Mod.TYPE_DROPBOX_FOLDER:
 				parseDropboxFolderData(mod, res);
 				break;
 			case Mod.TYPE_CURSEFORGE:
-                CurseForgeDataParser.parseCurseForgeData(mod, res);
+                CurseForgeDataParser.parseData(mod, res);
 				break;
 			case Mod.TYPE_CURSE:
-                CurseDataParser.parseCurseData(mod, res);
+                CurseDataParser.parseData(mod, res);
+				break;
+			case Mod.TYPE_KERBAL_SPACE_PARTS:
+                KerbalSpacePartsDataParser.parseData(mod, res);
 				break;
 			default:
 				parseDefaultData(mod);

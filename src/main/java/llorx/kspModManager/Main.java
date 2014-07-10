@@ -814,7 +814,7 @@ public class Main extends JFrame implements ActionListener {
 	}
 	
 	String[] getExcludeList(Mod mod) {
-		String[] undeededFilesArray = new String[]{"(source)", "(sources)", "(.*)(\\.txt)", "(.*)(\\.asciidoc)", "(.*)(\\.md)", "(.*)(source)(.*)(\\.zip)"};
+		String[] undeededFilesArray = new String[]{"(source)", "(sources)", "(.*)(\\.txt)", "(.*)(\\.pdf)", "(.*)(\\.asciidoc)", "(.*)(\\.md)", "(.*)(source)(.*)(\\.zip)"};
 		String[] mmArray = new String[]{"(modulemanager)(.*)(\\.dll)"};
 		int arraysize = 0;
 		if (ManagerConfig.excludeUnneededFiles == true) {
@@ -1646,7 +1646,7 @@ public class Main extends JFrame implements ActionListener {
 	
 	public void checkVersion() {
 		boolean updateFound = false;
-		String LMMversion = "v0.1.8.6.1alpha";
+		String LMMversion = "v0.1.8.7alpha";
 		try {
 			org.jsoup.nodes.Document doc = Http.get("http://forum.kerbalspaceprogram.com/threads/78861").parse();
 			org.jsoup.nodes.Element title = doc.select("span[class=threadtitle]").first();

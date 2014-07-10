@@ -14,7 +14,7 @@ import java.net.URLConnection;
 import java.net.URLEncoder;
 
 public class SpaceportParser {
-    static void parseSpaceportData(Mod mod, Connection.Response res) {
+    static void parseData(Mod mod, Connection.Response res) {
         try {
             res = Http.get(mod.getLink());
             Document doc = res.parse();

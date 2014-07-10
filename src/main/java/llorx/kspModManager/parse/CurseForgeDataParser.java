@@ -10,7 +10,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class CurseForgeDataParser {
-    static void parseCurseForgeData(Mod mod, Connection.Response res) {
+    static void parseData(Mod mod, Connection.Response res) {
         try {
             Pattern pattern = Pattern.compile("(.*)(kerbal.curseforge.com\\/)([^\\/]*)(\\/)(\\d*)([^\\/]*)");
             Matcher matcher = pattern.matcher(mod.getLink());
