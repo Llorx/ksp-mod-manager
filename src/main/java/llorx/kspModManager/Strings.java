@@ -102,6 +102,8 @@ public class Strings {
 	public static int MENU_STOP = 98;
 	public static int EXPORT_LIST = 99;
 	public static int MODLIST_SAVED = 100;
+	public static int ERROR_OCCURRED_SEND = 101;
+	public static int ERROR = 102;
 	
 	public static String[] locales = {"en", "es", "de"};
 	public static String[] localeNames = {"English", "Spanish", "German"};
@@ -215,6 +217,8 @@ public class Strings {
 			"Stop download", // Strings.MENU_STOP
 			"Export modlist", // Strings.EXPORT_LIST
 			"modlist.txt saved", // Strings.MODLIST_SAVED
+			"An error has occurred. An error.txt file was created, please, send it to the developer.", // Strings.ERROR_OCCURRED_SEND
+			"Error", // Strings.ERROR
 			
 	/* STOP EDITING HERE. SEND IT TO ME :P */
 			
@@ -321,6 +325,9 @@ public class Strings {
 			"Parar descarga", // Strings.MENU_STOP
 			"Exportar lista de mods", // Strings.EXPORT_LIST
 			"modlist.txt guardado.", // Strings.MODLIST_SAVED
+			"Ha ocurrido un error. Por favor, busca el archivo error.txt y envíalo al desarrollador.", // Strings.ERROR_OCCURRED_SEND
+			"Error", // Strings.ERROR
+			
 		},{ // DE = 2
 			"Mod Name", // Strings.MOD_NAME
 			"Letztes Datum", // Strings.LATEST_DATE
@@ -423,6 +430,8 @@ public class Strings {
 			"Stoppe Download", // Strings.MENU_STOP
 			null, // Strings.EXPORT_LIST
 			null, // Strings.MODLIST_SAVED
+			null, // Strings.ERROR_OCCURRED_SEND
+			null, // Strings.ERROR
 		}
 	};
 	
